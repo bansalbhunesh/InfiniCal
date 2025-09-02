@@ -6,6 +6,7 @@ import Toast from './Toast'
 import JournalOverlay from './JournalOverlay'
 import AddEntryModal from './AddEntryModal'
 import YearPicker from './YearPicker'
+import MonthYearPicker from './MonthYearPicker'
 
 export default function InfiniteCalendar() {
   const [anchorDate, setAnchorDate] = useState(new Date())
@@ -16,6 +17,7 @@ export default function InfiniteCalendar() {
   const [editInitial, setEditInitial] = useState(null)
   const [toast, setToast] = useState(null)
   const [yearPickerOpen, setYearPickerOpen] = useState(false)
+  const [monthYearOpen, setMonthYearOpen] = useState(false)
 
   const months = useMemo(() => getAdjacentMonths(anchorDate, 2), [anchorDate])
 
@@ -86,11 +88,11 @@ export default function InfiniteCalendar() {
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>addMonths(d,-1))}>Prev Month</button>
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>addMonths(d,1))}>Next Month</button>
           </div>
-          <div className="calendar-title" onClick={()=>setYearPickerOpen(true)}>{selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+          <div className="calendar-title" onClick={()=>setMonthYearOpen(true)}>{selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
           <div className="quick-nav">
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n })}>Prev Year</button>
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n })}>Next Year</button>
-            <button className="chip" onClick={()=>setSelectedDate(new Date())}>Today</button>
+            <button className="chip" onClick={()=>{ const t=new Date(); setSelectedDate(t); setAnchorDate(t); const el = containerRef.current; if(el){ setTimeout(()=>{ const m = el.querySelector('[aria-current="date"]').closest('[data-month-block]'); m&&m.scrollIntoView({behavior:'smooth',block:'start'}) },50)} }}>Today</button>
           </div>
         </div>
         <div className="calendar-subtitle">Use Ctrl+Arrows for faster navigation</div>
@@ -215,6 +217,14 @@ export default function InfiniteCalendar() {
         year={selectedDate.getFullYear()}
         onClose={()=>setYearPickerOpen(false)}
         onSelect={(y)=>{ const next = new Date(selectedDate); next.setFullYear(y); setSelectedDate(next); setAnchorDate(next) }}
+      />
+
+      <MonthYearPicker
+        isOpen={monthYearOpen}
+        year={selectedDate.getFullYear()}
+        month={selectedDate.getMonth()}
+        onClose={()=>setMonthYearOpen(false)}
+        onSelect={(y, m)=>{ const next = new Date(selectedDate); next.setFullYear(y); next.setMonth(m); setSelectedDate(next); setAnchorDate(next); setMonthYearOpen(false) }}
       />
 
       {toast && <Toast message={toast} onDone={()=>setToast(null)} />}
