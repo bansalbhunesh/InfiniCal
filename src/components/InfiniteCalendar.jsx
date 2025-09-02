@@ -1,3 +1,75 @@
+import React, { useMemo, useState } from 'react'
+import { addMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, format } from 'date-fns'
+
+function buildMonthGrid(activeDate) {
+  const monthStart = startOfMonth(activeDate)
+  const monthEnd = endOfMonth(activeDate)
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 0 })
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
+
+  const days = []
+  let day = gridStart
+  while (day <= gridEnd) {
+    days.push(day)
+    day = addDays(day, 1)
+  }
+  return days
+}
+
+export default function InfiniteCalendar() {
+  const [cursorDate, setCursorDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState(new Date())
+
+  const days = useMemo(() => buildMonthGrid(cursorDate), [cursorDate])
+
+  const goPrevMonth = () => setCursorDate(d => addMonths(d, -1))
+  const goNextMonth = () => setCursorDate(d => addMonths(d, 1))
+
+  return (
+    <div style={{ width: 340, background: 'white', borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.08)', padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <button onClick={goPrevMonth} aria-label="Previous month">‹</button>
+        <div style={{ fontWeight: 700 }}>{format(cursorDate, 'MMMM yyyy')}</div>
+        <button onClick={goNextMonth} aria-label="Next month">›</button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+          <div key={d} style={{ textAlign: 'center' }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+        {days.map(day => {
+          const disabled = !isSameMonth(day, cursorDate)
+          const isToday = isSameDay(day, new Date())
+          const isSelected = isSameDay(day, selectedDate)
+          const baseStyle = {
+            padding: '8px 0',
+            textAlign: 'center',
+            borderRadius: 8,
+            cursor: 'pointer',
+            userSelect: 'none',
+            color: disabled ? '#cbd5e1' : '#0f172a',
+            background: isSelected ? '#0ea5e9' : isToday ? 'rgba(14,165,233,0.12)' : 'transparent',
+            fontWeight: isSelected ? 700 : 500
+          }
+          return (
+            <div
+              key={day.toISOString()}
+              onClick={() => setSelectedDate(day)}
+              style={baseStyle}
+              aria-current={isToday ? 'date' : undefined}
+              aria-selected={isSelected}
+              role="gridcell"
+            >
+              {format(day, 'd')}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 

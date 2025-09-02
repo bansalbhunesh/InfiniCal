@@ -1,13 +1,10 @@
-import React from 'react';
-import InfiniteCalendar from './components/InfiniteCalendar';
-import './App.css';
+import React from 'react'
+import InfiniteCalendar from './components/InfiniteCalendar'
 
-function App() {
+export default function App() {
   return (
-    <div className="App">
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
       <InfiniteCalendar />
     </div>
-  );
+  )
 }
-
-export default App;
