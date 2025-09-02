@@ -1,0 +1,15 @@
+[33mcommit 8cf3e15205499e75d50fb3ab9ba91e74cca898b9[m
+Author: bansalbhunesh <bhuneshbansal20039888@gmail.com>
+Date:   Tue Sep 2 17:53:32 2025 +0530
+
+    Enhance demo data with complete 2020 year population
+    
+    - Add comprehensive 2020 journal entries (full year coverage)
+    - Include special memorable entries for significant 2020 dates
+    - Implement modular date range seeding function for better maintainability
+    - Add unique entry prefixes to distinguish recent vs historical data
+    - Provide rich historical dataset for demonstrating long-term journaling
+    - Total demo coverage now spans ~546 days across multiple years
+
+ src/state/seed.js | 71 [32m++++++++++++++++++++++++++++++++++++++++++[m[31m-------------[m
+ 1 file changed, 55 insertions(+), 16 deletions(-)

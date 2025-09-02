@@ -32,21 +32,19 @@ function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate, anc
     <div className="month-block" data-month={`${monthDate.getFullYear()}-${monthDate.getMonth()}`}>
       <div className="month-header">{label}</div>
       <div className="days-grid">
-        {days.map((d) => {
-          const isSelected = selectedDate && isSameDay(d.date, selectedDate)
-          const className = `day-cell${d.isCurrentMonth ? '' : ' other-month'}${d.isToday ? ' today' : ''}${d.entries.length ? ' has-entry' : ''}${isSelected ? ' selected' : ''}`
-          console.log('Day:', d.date.getDate(), 'isSelected:', isSelected, 'className:', className)
-          return (
+        {days.map((d) => (
           <div
             key={d.dk}
-            className={className}
+            className={`day-cell${d.isCurrentMonth ? '' : ' other-month'}${d.isToday ? ' today' : ''}${d.entries.length ? ' has-entry' : ''}${selectedDate && isSameDay(d.date, selectedDate) ? ' selected' : ''}`}
             data-date={d.dk}
             onClick={() => {
               // Only allow selection of dates within the current month
               if (!d.isCurrentMonth) return
               
-              console.log('Day clicked:', d.date, 'Current selectedDate:', selectedDate)
-              // Use the centralized navigation function
+              // Directly set selected date for immediate visual feedback
+              setSelectedDate(d.date)
+              
+              // Use the centralized navigation function for scrolling
               navigateToDate(d.date)
             }}
           >
@@ -72,8 +70,7 @@ function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate, anc
               ))}
             </div>
           </div>
-          )
-        })}
+        ))}
       </div>
     </div>
   )
@@ -145,14 +142,11 @@ export default function FinalInfiniteCalendar() {
 
   // Helper function to navigate to any date (including distant years)
   const navigateToDate = useCallback((targetDate) => {
-    console.log('navigateToDate called with:', targetDate)
     const targetYear = targetDate.getFullYear()
     const anchorYear = anchorDate.getFullYear()
     const yearDiff = Math.abs(targetYear - anchorYear)
     
-    // Set the selected date first
-    console.log('Setting selectedDate to:', targetDate)
-    setSelectedDate(targetDate)
+    // Note: selectedDate is set directly in onClick for immediate feedback
     
     if (yearDiff > 1) {
       // For distant dates, update anchor and scroll
