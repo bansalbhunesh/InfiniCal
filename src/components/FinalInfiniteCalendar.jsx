@@ -11,7 +11,7 @@ function generateStars(rating) {
   return `${'★'.repeat(full)}${half ? '☆' : ''}`
 }
 
-function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate }) {
+function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate, anchorDate, setAnchorDate }) {
   // Build 6x7 grid
   const first = startOfMonth(monthDate)
   const start = new Date(first)
@@ -35,7 +35,13 @@ function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate }) {
             key={d.dk}
             className={`day-cell${d.isCurrentMonth ? '' : ' other-month'}${d.isToday ? ' today' : ''}${d.entries.length ? ' has-entry' : ''}${selectedDate && d.date.toDateString()===new Date(selectedDate).toDateString() ? ' selected' : ''}`}
             data-date={d.dk}
-            onClick={() => onSelectDate(d.date)}
+            onClick={() => {
+              onSelectDate(d.date)
+              // Also update anchorDate to ensure the selected month stays visible
+              if (!isSameMonth(d.date, anchorDate)) {
+                setAnchorDate(startOfMonth(d.date))
+              }
+            }}
           >
             <div className="day-header">
               <div className="day-number">{d.date.getDate()}</div>
@@ -164,11 +170,53 @@ export default function FinalInfiniteCalendar() {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') { setPickerOpen(false); setOverlayOpen(false) }
-      else if (e.ctrlKey && e.key === 'ArrowLeft') setAnchorDate((d) => addMonths(d, -1))
-      else if (e.ctrlKey && e.key === 'ArrowRight') setAnchorDate((d) => addMonths(d, 1))
-      else if (e.ctrlKey && e.key === 'ArrowUp') setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() - 1); return n })
-      else if (e.ctrlKey && e.key === 'ArrowDown') setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() + 1); return n })
-      else if ((e.ctrlKey && (e.key === 't' || e.key === 'T'))) { const t = new Date(); setAnchorDate(t); setSelectedDate(t) }
+      else if (e.ctrlKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setAnchorDate((d) => addMonths(d, -1));
+        // Smooth scroll to maintain viewport position
+        setTimeout(() => {
+          const viewport = viewportRef.current;
+          if (viewport) viewport.style.scrollBehavior = 'smooth';
+        }, 50);
+      }
+      else if (e.ctrlKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        setAnchorDate((d) => addMonths(d, 1));
+        setTimeout(() => {
+          const viewport = viewportRef.current;
+          if (viewport) viewport.style.scrollBehavior = 'smooth';
+        }, 50);
+      }
+      else if (e.ctrlKey && e.key === 'ArrowUp') {
+        e.preventDefault();
+        setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() - 1); return n });
+        setTimeout(() => {
+          const viewport = viewportRef.current;
+          if (viewport) viewport.style.scrollBehavior = 'smooth';
+        }, 50);
+      }
+      else if (e.ctrlKey && e.key === 'ArrowDown') {
+        e.preventDefault();
+        setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() + 1); return n });
+        setTimeout(() => {
+          const viewport = viewportRef.current;
+          if (viewport) viewport.style.scrollBehavior = 'smooth';
+        }, 50);
+      }
+      else if ((e.ctrlKey && (e.key === 't' || e.key === 'T'))) { 
+        e.preventDefault();
+        const t = new Date(); 
+        setAnchorDate(t); 
+        setSelectedDate(t);
+        // Smooth scroll to today
+        setTimeout(() => {
+          const viewport = viewportRef.current;
+          const todayEl = viewport?.querySelector('.today');
+          if (todayEl) {
+            todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
       else if (e.key === 'ArrowLeft' && overlayOpen) setOverlayIndex((i) => Math.max(0, i - 1))
       else if (e.key === 'ArrowRight' && overlayOpen) setOverlayIndex((i) => Math.min(flattened.length - 1, i + 1))
     }
@@ -242,7 +290,19 @@ export default function FinalInfiniteCalendar() {
           <div className="nav-controls">
             <div className="quick-nav">
               <button className="nav-btn" onClick={() => setAnchorDate((d) => addMonths(d, -1))}>← Prev</button>
-              <button className="nav-btn" onClick={() => { const t = new Date(); setAnchorDate(t); setSelectedDate(t) }}>Today</button>
+              <button className="nav-btn" onClick={() => { 
+                const t = new Date(); 
+                setAnchorDate(t); 
+                setSelectedDate(t);
+                // Smooth scroll to today
+                setTimeout(() => {
+                  const viewport = viewportRef.current;
+                  const todayEl = viewport?.querySelector('.today');
+                  if (todayEl) {
+                    todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }, 100);
+              }}>Today</button>
               <button className="nav-btn" onClick={() => setAnchorDate((d) => addMonths(d, 1))}>Next →</button>
             </div>
             <div className="quick-nav">
@@ -263,6 +323,8 @@ export default function FinalInfiniteCalendar() {
                 onSelectDate={(d) => { setSelectedDate(d) }}
                 onOpenFromMini={openFromMini}
                 selectedDate={selectedDate}
+                anchorDate={anchorDate}
+                setAnchorDate={setAnchorDate}
               />
             ))}
           </div>

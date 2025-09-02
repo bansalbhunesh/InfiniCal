@@ -31,7 +31,12 @@ export default function InfiniteCalendar() {
       if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); setAnchorDate(d=>addMonths(d,1)) }
       if (e.ctrlKey && e.key === 'ArrowUp') { e.preventDefault(); setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n }) }
       if (e.ctrlKey && e.key === 'ArrowDown') { e.preventDefault(); setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n }) }
-      if (e.ctrlKey && (e.key === 't' || e.key === 'T')) { e.preventDefault(); setSelectedDate(new Date()) }
+      if (e.ctrlKey && (e.key === 't' || e.key === 'T')) { 
+        e.preventDefault(); 
+        const today = new Date();
+        setSelectedDate(today);
+        setAnchorDate(today);
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -92,7 +97,7 @@ export default function InfiniteCalendar() {
           <div className="quick-nav">
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n })}>Prev Year</button>
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n })}>Next Year</button>
-            <button className="chip" onClick={()=>{ const t=new Date(); setSelectedDate(t); setAnchorDate(t); const el = containerRef.current; if(el){ setTimeout(()=>{ const m = el.querySelector('[aria-current="date"]').closest('[data-month-block]'); m&&m.scrollIntoView({behavior:'smooth',block:'start'}) },50)} }}>Today</button>
+            <button className="chip" onClick={()=>{ const t=new Date(); setSelectedDate(t); setAnchorDate(t); const el = containerRef.current; if(el){ setTimeout(()=>{ const m = el.querySelector('[aria-current="date"]')?.closest('[data-month-block]'); m&&m.scrollIntoView({behavior:'smooth',block:'center'}) },100)} }}>Today</button>
       </div>
     </div>
         <div className="calendar-subtitle">Use Ctrl+Arrows for faster navigation</div>
@@ -116,7 +121,13 @@ export default function InfiniteCalendar() {
                 return (
                   <div
                     key={day.toISOString()}
-                    onClick={() => setSelectedDate(day)}
+                    onClick={() => {
+                      setSelectedDate(day)
+                      // Ensure the selected date's month is visible
+                      if (!isSameMonth(day, anchorDate)) {
+                        setAnchorDate(startOfMonth(day))
+                      }
+                    }}
                     onDoubleClick={() => openEntriesForDate(day)}
                     className={`day-cell${disabled?' day-outside':''}${isToday?' day-today':''}${isSelected?' day-selected':''}`}
                     style={{ minHeight: 54 }}
