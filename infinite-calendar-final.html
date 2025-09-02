@@ -297,6 +297,7 @@
             flex-direction: column;
             gap: 4px;
             overflow: hidden;
+            pointer-events: none; /* Allow clicks to pass through to day cell */
         }
 
         .entry-mini-card {
@@ -308,6 +309,7 @@
             transition: all 0.2s ease;
             cursor: pointer;
             border-left: 3px solid #667eea;
+            pointer-events: auto; /* Re-enable clicks for entry cards */
         }
 
         .day-cell.has-entry .entry-mini-card {
