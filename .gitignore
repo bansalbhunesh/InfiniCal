@@ -7,6 +7,10 @@ yarn-error.log*
 # Production build
 dist/
 
+# Vite cache
+node_modules/.vite/
+.vite/
+
 # Environment variables
 .env
 .env.local
@@ -20,6 +24,10 @@ dist/
 *.swp
 *.swo
 
+# Editor settings
+.history/
+.eslintcache
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -32,3 +40,19 @@ Thumbs.db
 # Logs
 logs
 *.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Misc
+coverage/
+.nyc_output/
+*.pid
+*.seed
+*.pid.lock
+.cache/
+.tmp/
+temp/
+tmp/
