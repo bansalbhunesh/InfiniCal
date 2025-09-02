@@ -11,6 +11,7 @@ import MonthYearPicker from './MonthYearPicker'
 export default function InfiniteCalendar() {
   const [anchorDate, setAnchorDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [isUserNavigating, setIsUserNavigating] = useState(false)
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayIndex, setOverlayIndex] = useState(0)
   const [addModalOpen, setAddModalOpen] = useState(false)
@@ -66,13 +67,16 @@ export default function InfiniteCalendar() {
     const el = containerRef.current
     if (!el) return
     function onScroll() {
+      // Don't auto-update when user is manually navigating
+      if (isUserNavigating) return
+      
       const edge = 200
       if (el.scrollTop < edge) setAnchorDate(d => addMonths(d, -1))
       if (el.scrollHeight - el.clientHeight - el.scrollTop < edge) setAnchorDate(d => addMonths(d, 1))
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [isUserNavigating])
 
   // Scroll to the current month on load
   useEffect(() => {
@@ -122,11 +126,13 @@ export default function InfiniteCalendar() {
                   <div
                     key={day.toISOString()}
                     onClick={() => {
+                      setIsUserNavigating(true)
                       setSelectedDate(day)
                       // Ensure the selected date's month is visible
                       if (!isSameMonth(day, anchorDate)) {
                         setAnchorDate(startOfMonth(day))
                       }
+                      setTimeout(() => setIsUserNavigating(false), 1000)
                     }}
                     onDoubleClick={() => openEntriesForDate(day)}
                     className={`day-cell${disabled?' day-outside':''}${isToday?' day-today':''}${isSelected?' day-selected':''}`}
