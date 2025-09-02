@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { addMonths, startOfMonth, isSameMonth, isSameDay } from 'date-fns'
 import { buildMonthGrid, getAdjacentMonths, formatDateKey, formatDisplayDate } from '../utils/date'
-import { getEntries, upsertEntry, deleteEntry } from '../state/journalStore'
+import { getEntries, upsertEntry, deleteEntry, getFlattenedEntriesSorted } from '../state/journalStore'
+import Toast from './Toast'
 import JournalOverlay from './JournalOverlay'
 import AddEntryModal from './AddEntryModal'
+import YearPicker from './YearPicker'
 
 export default function InfiniteCalendar() {
   const [anchorDate, setAnchorDate] = useState(new Date())
@@ -11,6 +13,8 @@ export default function InfiniteCalendar() {
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayIndex, setOverlayIndex] = useState(0)
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [yearPickerOpen, setYearPickerOpen] = useState(false)
 
   const months = useMemo(() => getAdjacentMonths(anchorDate, 2), [anchorDate])
 
@@ -19,9 +23,12 @@ export default function InfiniteCalendar() {
   // Keyboard shortcuts
   useEffect(() => {
     function onKey(e) {
+      if (e.key === 'Escape') { setOverlayOpen(false); setAddModalOpen(false); setYearPickerOpen(false) }
       if (e.ctrlKey && e.key === 'ArrowLeft') { e.preventDefault(); setAnchorDate(d=>addMonths(d,-1)) }
       if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); setAnchorDate(d=>addMonths(d,1)) }
-      if (e.ctrlKey && e.key === 't') { e.preventDefault(); setSelectedDate(new Date()) }
+      if (e.ctrlKey && e.key === 'ArrowUp') { e.preventDefault(); setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n }) }
+      if (e.ctrlKey && e.key === 'ArrowDown') { e.preventDefault(); setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n }) }
+      if (e.ctrlKey && (e.key === 't' || e.key === 'T')) { e.preventDefault(); setSelectedDate(new Date()) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -35,17 +42,34 @@ export default function InfiniteCalendar() {
 
   const entriesForSelected = useMemo(() => getEntries(formatDateKey(selectedDate)), [selectedDate])
 
-  const openEntriesOverlay = (initialIndex = 0) => {
-    setOverlayIndex(initialIndex)
-    setOverlayOpen(true)
-  }
+  const openEntriesOverlay = (initialIndex = 0) => { setOverlayIndex(initialIndex); setOverlayOpen(true) }
+
+  // Infinite month loading using sentinels
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    function onScroll() {
+      const edge = 200
+      if (el.scrollTop < edge) setAnchorDate(d => addMonths(d, -1))
+      if (el.scrollHeight - el.clientHeight - el.scrollTop < edge) setAnchorDate(d => addMonths(d, 1))
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <div style={{ width: '100%', maxWidth: 1000, background: 'white', borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.08)', padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <button onClick={()=>setAnchorDate(d=>addMonths(d,-1))} aria-label="Previous month">‹</button>
-        <div style={{ fontWeight: 700 }}>{selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
-        <button onClick={()=>setAnchorDate(d=>addMonths(d,1))} aria-label="Next month">›</button>
+    <div style={{ width: '100%', maxWidth: 1200, background: 'white', borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.08)', padding: 16, display:'grid', gridTemplateColumns:'1fr 360px', gap:16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8 }}>
+        <div style={{ display:'flex', gap:6 }}>
+          <button onClick={()=>setAnchorDate(d=>addMonths(d,-1))}>Prev Month</button>
+          <button onClick={()=>setAnchorDate(d=>addMonths(d,1))}>Next Month</button>
+        </div>
+        <div style={{ fontWeight: 700, cursor:'pointer' }} onClick={()=>setYearPickerOpen(true)}>{selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+        <div style={{ display:'flex', gap:6 }}>
+          <button onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n })}>Prev Year</button>
+          <button onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n })}>Next Year</button>
+          <button onClick={()=>setSelectedDate(new Date())}>Today</button>
+        </div>
       </div>
       <div ref={containerRef} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
         {monthBlocks.map(({ monthDate, days, label }) => (
@@ -96,13 +120,34 @@ export default function InfiniteCalendar() {
         ))}
       </div>
 
-      {/* Actions area */}
-      <div style={{ display:'flex', gap:8, marginTop: 12 }}>
-        <button onClick={()=>setAddModalOpen(true)}>Add Entry</button>
-        <button onClick={()=>setSelectedDate(new Date())}>Today</button>
-        {!!entriesForSelected.length && (
-          <button onClick={()=>openEntriesOverlay(0)}>Open Entries</button>
-        )}
+      {/* Right side journal panel */}
+      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <div style={{ fontWeight: 800, fontSize: 16 }}>{formatDisplayDate(selectedDate)}</div>
+        <div style={{ display:'flex', gap:8 }}>
+          <button onClick={()=>setAddModalOpen(true)}>Add Entry</button>
+          <button onClick={()=>setSelectedDate(new Date())}>Today</button>
+          {!!entriesForSelected.length && (
+            <button onClick={()=>openEntriesOverlay(0)}>Open</button>
+          )}
+        </div>
+        <div style={{ overflowY:'auto' }}>
+          {entriesForSelected.length === 0 && (
+            <div style={{ color:'#94a3b8', fontSize: 14 }}>No entries yet</div>
+          )}
+          {entriesForSelected.map((e, idx) => (
+            <div key={e.id} style={{border:'1px solid #e2e8f0', borderRadius:10, padding:10, marginBottom:10}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div style={{color:'#f59e0b',fontWeight:700}}>{'★'.repeat(Math.round(e.rating || 0))}</div>
+                <div style={{display:'flex',gap:8}}>
+                  <button onClick={()=>{ setOverlayIndex(idx); setOverlayOpen(true) }}>View</button>
+                  <button onClick={()=>{ deleteEntry(formatDateKey(selectedDate), e.id); setToast('🗑️ Journal entry deleted successfully!') }}>Delete</button>
+                </div>
+              </div>
+              <div style={{fontSize:12,color:'#64748b',margin:'6px 0'}}>{Array.isArray(e.categories) ? e.categories.join(', ') : ''}</div>
+              <div style={{whiteSpace:'pre-wrap',fontSize:14}}>{e.description}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <JournalOverlay
@@ -132,8 +177,18 @@ export default function InfiniteCalendar() {
           }
           upsertEntry(dateKey, entry)
           setAddModalOpen(false)
+          setToast('✅ Journal entry saved successfully!')
         }}
       />
+
+      <YearPicker
+        isOpen={yearPickerOpen}
+        year={selectedDate.getFullYear()}
+        onClose={()=>setYearPickerOpen(false)}
+        onSelect={(y)=>{ const next = new Date(selectedDate); next.setFullYear(y); setSelectedDate(next); setAnchorDate(next) }}
+      />
+
+      {toast && <Toast message={toast} onDone={()=>setToast(null)} />}
     </div>
   )
 }

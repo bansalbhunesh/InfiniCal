@@ -51,4 +51,16 @@ export function getAllDatedKeysSorted() {
   return Object.keys(journalDb).sort()
 }
 
+export function getFlattenedEntriesSorted() {
+  const keys = getAllDatedKeysSorted()
+  const flattened = []
+  for (const dateKey of keys) {
+    const entries = journalDb[dateKey] || []
+    for (let i = 0; i < entries.length; i++) {
+      flattened.push({ ...entries[i], dateKey, entryIndex: i })
+    }
+  }
+  return flattened
+}
+
 
