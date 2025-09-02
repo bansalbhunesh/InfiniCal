@@ -225,42 +225,72 @@ export default function FinalInfiniteCalendar() {
       else if (e.ctrlKey && e.key === 'ArrowLeft') {
         e.preventDefault();
         setIsUserNavigating(true);
-        setAnchorDate((d) => addMonths(d, -1));
+        const newDate = addMonths(anchorDate, -1);
+        setAnchorDate(newDate);
         setTimeout(() => {
           const viewport = viewportRef.current;
-          if (viewport) viewport.style.scrollBehavior = 'smooth';
+          if (viewport) {
+            const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+            const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+            if (monthEl) {
+              monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
           setIsUserNavigating(false);
-        }, 500);
+        }, 200);
       }
       else if (e.ctrlKey && e.key === 'ArrowRight') {
         e.preventDefault();
         setIsUserNavigating(true);
-        setAnchorDate((d) => addMonths(d, 1));
+        const newDate = addMonths(anchorDate, 1);
+        setAnchorDate(newDate);
         setTimeout(() => {
           const viewport = viewportRef.current;
-          if (viewport) viewport.style.scrollBehavior = 'smooth';
+          if (viewport) {
+            const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+            const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+            if (monthEl) {
+              monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
           setIsUserNavigating(false);
-        }, 500);
+        }, 200);
       }
       else if (e.ctrlKey && e.key === 'ArrowUp') {
         e.preventDefault();
         setIsUserNavigating(true);
-        setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() - 1); return n });
+        const newDate = new Date(anchorDate);
+        newDate.setFullYear(newDate.getFullYear() - 1);
+        setAnchorDate(newDate);
         setTimeout(() => {
           const viewport = viewportRef.current;
-          if (viewport) viewport.style.scrollBehavior = 'smooth';
+          if (viewport) {
+            const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+            const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+            if (monthEl) {
+              monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
           setIsUserNavigating(false);
-        }, 500);
+        }, 300);
       }
       else if (e.ctrlKey && e.key === 'ArrowDown') {
         e.preventDefault();
         setIsUserNavigating(true);
-        setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() + 1); return n });
+        const newDate = new Date(anchorDate);
+        newDate.setFullYear(newDate.getFullYear() + 1);
+        setAnchorDate(newDate);
         setTimeout(() => {
           const viewport = viewportRef.current;
-          if (viewport) viewport.style.scrollBehavior = 'smooth';
+          if (viewport) {
+            const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+            const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+            if (monthEl) {
+              monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
           setIsUserNavigating(false);
-        }, 500);
+        }, 300);
       }
       else if ((e.ctrlKey && (e.key === 't' || e.key === 'T'))) { 
         e.preventDefault();
@@ -356,7 +386,19 @@ export default function FinalInfiniteCalendar() {
               <button className="nav-btn" onClick={() => {
                 setIsUserNavigating(true);
                 setAnchorDate((d) => addMonths(d, -1));
-                setTimeout(() => setIsUserNavigating(false), 500);
+                // Scroll to show the new month
+                setTimeout(() => {
+                  const viewport = viewportRef.current;
+                  if (viewport) {
+                    const newDate = addMonths(anchorDate, -1);
+                    const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+                    const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+                    if (monthEl) {
+                      monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }
+                  setIsUserNavigating(false);
+                }, 200);
               }}>← Prev</button>
               <button className="nav-btn" onClick={() => { 
                 setIsUserNavigating(true);
@@ -376,19 +418,57 @@ export default function FinalInfiniteCalendar() {
               <button className="nav-btn" onClick={() => {
                 setIsUserNavigating(true);
                 setAnchorDate((d) => addMonths(d, 1));
-                setTimeout(() => setIsUserNavigating(false), 500);
+                // Scroll to show the new month
+                setTimeout(() => {
+                  const viewport = viewportRef.current;
+                  if (viewport) {
+                    const newDate = addMonths(anchorDate, 1);
+                    const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+                    const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+                    if (monthEl) {
+                      monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }
+                  setIsUserNavigating(false);
+                }, 200);
               }}>Next →</button>
             </div>
             <div className="quick-nav">
               <button className="nav-btn" onClick={() => {
                 setIsUserNavigating(true);
-                setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() - 1); return n });
-                setTimeout(() => setIsUserNavigating(false), 500);
+                const newDate = new Date(anchorDate);
+                newDate.setFullYear(newDate.getFullYear() - 1);
+                setAnchorDate(newDate);
+                // Scroll to show the new year
+                setTimeout(() => {
+                  const viewport = viewportRef.current;
+                  if (viewport) {
+                    const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+                    const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+                    if (monthEl) {
+                      monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }
+                  setIsUserNavigating(false);
+                }, 300);
               }}>‹ Year</button>
               <button className="nav-btn" onClick={() => {
                 setIsUserNavigating(true);
-                setAnchorDate((d) => { const n = new Date(d); n.setFullYear(n.getFullYear() + 1); return n });
-                setTimeout(() => setIsUserNavigating(false), 500);
+                const newDate = new Date(anchorDate);
+                newDate.setFullYear(newDate.getFullYear() + 1);
+                setAnchorDate(newDate);
+                // Scroll to show the new year
+                setTimeout(() => {
+                  const viewport = viewportRef.current;
+                  if (viewport) {
+                    const targetMonth = `${newDate.getFullYear()}-${newDate.getMonth()}`;
+                    const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`);
+                    if (monthEl) {
+                      monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }
+                  setIsUserNavigating(false);
+                }, 300);
               }}>Year ›</button>
             </div>
           </div>

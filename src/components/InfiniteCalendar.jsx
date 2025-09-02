@@ -28,10 +28,72 @@ export default function InfiniteCalendar() {
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') { setOverlayOpen(false); setAddModalOpen(false); setYearPickerOpen(false) }
-      if (e.ctrlKey && e.key === 'ArrowLeft') { e.preventDefault(); setAnchorDate(d=>addMonths(d,-1)) }
-      if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); setAnchorDate(d=>addMonths(d,1)) }
-      if (e.ctrlKey && e.key === 'ArrowUp') { e.preventDefault(); setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n }) }
-      if (e.ctrlKey && e.key === 'ArrowDown') { e.preventDefault(); setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n }) }
+      if (e.ctrlKey && e.key === 'ArrowLeft') { 
+        e.preventDefault(); 
+        setIsUserNavigating(true);
+        const newDate = addMonths(anchorDate, -1);
+        setAnchorDate(newDate);
+        setTimeout(() => {
+          const el = containerRef.current;
+          if (el) {
+            const monthBlock = el.querySelector('[data-month-block]');
+            if (monthBlock) {
+              monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+          setIsUserNavigating(false);
+        }, 200);
+      }
+      if (e.ctrlKey && e.key === 'ArrowRight') { 
+        e.preventDefault(); 
+        setIsUserNavigating(true);
+        const newDate = addMonths(anchorDate, 1);
+        setAnchorDate(newDate);
+        setTimeout(() => {
+          const el = containerRef.current;
+          if (el) {
+            const monthBlock = el.querySelector('[data-month-block]');
+            if (monthBlock) {
+              monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+          setIsUserNavigating(false);
+        }, 200);
+      }
+      if (e.ctrlKey && e.key === 'ArrowUp') { 
+        e.preventDefault(); 
+        setIsUserNavigating(true);
+        const newDate = new Date(anchorDate);
+        newDate.setFullYear(newDate.getFullYear() - 1);
+        setAnchorDate(newDate);
+        setTimeout(() => {
+          const el = containerRef.current;
+          if (el) {
+            const monthBlock = el.querySelector('[data-month-block]');
+            if (monthBlock) {
+              monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+          setIsUserNavigating(false);
+        }, 300);
+      }
+      if (e.ctrlKey && e.key === 'ArrowDown') { 
+        e.preventDefault(); 
+        setIsUserNavigating(true);
+        const newDate = new Date(anchorDate);
+        newDate.setFullYear(newDate.getFullYear() + 1);
+        setAnchorDate(newDate);
+        setTimeout(() => {
+          const el = containerRef.current;
+          if (el) {
+            const monthBlock = el.querySelector('[data-month-block]');
+            if (monthBlock) {
+              monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+          setIsUserNavigating(false);
+        }, 300);
+      }
       if (e.ctrlKey && (e.key === 't' || e.key === 'T')) { 
         e.preventDefault(); 
         const today = new Date();
@@ -94,13 +156,71 @@ export default function InfiniteCalendar() {
       <div className="calendar-header">
         <div className="nav-controls">
           <div className="quick-nav">
-            <button className="nav-btn" onClick={()=>setAnchorDate(d=>addMonths(d,-1))}>Prev Month</button>
-            <button className="nav-btn" onClick={()=>setAnchorDate(d=>addMonths(d,1))}>Next Month</button>
+            <button className="nav-btn" onClick={()=>{
+              setIsUserNavigating(true);
+              const newDate = addMonths(anchorDate, -1);
+              setAnchorDate(newDate);
+              setTimeout(() => {
+                const el = containerRef.current;
+                if (el) {
+                  const monthBlock = el.querySelector('[data-month-block]');
+                  if (monthBlock) {
+                    monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }
+                setIsUserNavigating(false);
+              }, 200);
+            }}>Prev Month</button>
+            <button className="nav-btn" onClick={()=>{
+              setIsUserNavigating(true);
+              const newDate = addMonths(anchorDate, 1);
+              setAnchorDate(newDate);
+              setTimeout(() => {
+                const el = containerRef.current;
+                if (el) {
+                  const monthBlock = el.querySelector('[data-month-block]');
+                  if (monthBlock) {
+                    monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }
+                setIsUserNavigating(false);
+              }, 200);
+            }}>Next Month</button>
           </div>
           <div className="calendar-title" onClick={()=>setMonthYearOpen(true)}>{selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
           <div className="quick-nav">
-            <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n })}>Prev Year</button>
-            <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n })}>Next Year</button>
+            <button className="nav-btn" onClick={()=>{
+              setIsUserNavigating(true);
+              const newDate = new Date(anchorDate);
+              newDate.setFullYear(newDate.getFullYear() - 1);
+              setAnchorDate(newDate);
+              setTimeout(() => {
+                const el = containerRef.current;
+                if (el) {
+                  const monthBlock = el.querySelector('[data-month-block]');
+                  if (monthBlock) {
+                    monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }
+                setIsUserNavigating(false);
+              }, 300);
+            }}>Prev Year</button>
+            <button className="nav-btn" onClick={()=>{
+              setIsUserNavigating(true);
+              const newDate = new Date(anchorDate);
+              newDate.setFullYear(newDate.getFullYear() + 1);
+              setAnchorDate(newDate);
+              setTimeout(() => {
+                const el = containerRef.current;
+                if (el) {
+                  const monthBlock = el.querySelector('[data-month-block]');
+                  if (monthBlock) {
+                    monthBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }
+                setIsUserNavigating(false);
+              }, 300);
+            }}>Next Year</button>
             <button className="chip" onClick={()=>{ const t=new Date(); setSelectedDate(t); setAnchorDate(t); const el = containerRef.current; if(el){ setTimeout(()=>{ const m = el.querySelector('[aria-current="date"]')?.closest('[data-month-block]'); m&&m.scrollIntoView({behavior:'smooth',block:'center'}) },100)} }}>Today</button>
       </div>
     </div>
