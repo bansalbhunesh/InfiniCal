@@ -1,6 +1,10 @@
 # InfiniCal (Vite + React)
 
-InfiniCal is a modern, high-performance infinite calendar and journaling app. This repo contains:
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+
+InfiniCal is a modern, high-performance infinite calendar and journaling app built with **React** and **Vite**. This repo contains:
 - A production-ready Vite + React implementation with feature parity to the standalone HTML.
 - A standalone reference file: `infinite-calendar-final.html`.
 
