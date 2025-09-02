@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Test - Debug Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .debug-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .test-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info">
+        <h2>🔍 Calendar Debug Test</h2>
+        <div id="loadStatus">⏳ Initializing...</div>
+        <div id="errorLog"></div>
+        
+        <h3>Test Buttons:</h3>
+        <button class="test-btn" onclick="testBasicJS()">Test Basic JS</button>
+        <button class="test-btn" onclick="testLocalStorage()">Test LocalStorage</button>
+        <button class="test-btn" onclick="testDateUtils()">Test Date Functions</button>
+        <button class="test-btn" onclick="loadFullCalendar()">Load Full Calendar</button>
+    </div>
+
+    <div id="calendarContainer">
+        <div class="loading">
+            <div>📅 Loading calendar...</div>
+            <div style="font-size: 14px; margin-top: 10px;">If this doesn't load, check console for errors</div>
+        </div>
+    </div>
+
+    <script>
+        // Basic error catching
+        window.addEventListener('error', function(e) {
+            console.error('❌ JavaScript Error:', e.error);
+            document.getElementById('errorLog').innerHTML += `
+                <div class="error">❌ Error: ${e.message}</div>
+                <div style="font-size: 12px; color: #666;">File: ${e.filename}, Line: ${e.lineno}</div>
+            `;
+        });
+
+        // Test functions
+        function testBasicJS() {
+            try {
+                console.log('✅ Basic JavaScript working');
+                document.getElementById('loadStatus').innerHTML = '<span class="success">✅ Basic JavaScript: OK</span>';
+                return true;
+            } catch (e) {
+                console.error('❌ Basic JS failed:', e);
+                document.getElementById('loadStatus').innerHTML = '<span class="error">❌ Basic JavaScript: FAILED</span>';
+                return false;
+            }
+        }
+
+        function testLocalStorage() {
+            try {
+                localStorage.setItem('test', 'working');
+                const test = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                console.log('✅ LocalStorage working');
+                document.getElementById('loadStatus').innerHTML += '<br><span class="success">✅ LocalStorage: OK</span>';
+                return true;
+            } catch (e) {
+                console.error('❌ LocalStorage failed:', e);
+                document.getElementById('loadStatus').innerHTML += '<br><span class="error">❌ LocalStorage: FAILED</span>';
+                return false;
+            }
+        }
+
+        function testDateUtils() {
+            try {
+                const now = new Date();
+                const formatted = now.toLocaleDateString('en-US');
+                console.log('✅ Date functions working:', formatted);
+                document.getElementById('loadStatus').innerHTML += '<br><span class="success">✅ Date Functions: OK</span>';
+                return true;
+            } catch (e) {
+                console.error('❌ Date functions failed:', e);
+                document.getElementById('loadStatus').innerHTML += '<br><span class="error">❌ Date Functions: FAILED</span>';
+                return false;
+            }
+        }
+
+        function loadFullCalendar() {
+            document.getElementById('loadStatus').innerHTML += '<br>🔄 Loading full calendar...';
+            
+            // Create iframe to load the full calendar
+            const iframe = document.createElement('iframe');
+            iframe.src = 'infinite-calendar-final.html';
+            iframe.style.width = '100%';
+            iframe.style.height = '600px';
+            iframe.style.border = '1px solid #ddd';
+            iframe.style.borderRadius = '10px';
+            
+            iframe.onload = function() {
+                document.getElementById('loadStatus').innerHTML += '<br><span class="success">✅ Full Calendar: LOADED</span>';
+            };
+            
+            iframe.onerror = function() {
+                document.getElementById('loadStatus').innerHTML += '<br><span class="error">❌ Full Calendar: FAILED TO LOAD</span>';
+            };
+            
+            document.getElementById('calendarContainer').innerHTML = '';
+            document.getElementById('calendarContainer').appendChild(iframe);
+        }
+
+        // Auto-run basic tests
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Debug test page loaded');
+            
+            setTimeout(() => {
+                testBasicJS();
+                setTimeout(() => testLocalStorage(), 500);
+                setTimeout(() => testDateUtils(), 1000);
+            }, 100);
+        });
+
+        // Also test if we can access the main calendar file
+        fetch('infinite-calendar-final.html')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Calendar file accessible');
+                    document.getElementById('loadStatus').innerHTML += '<br><span class="success">✅ Calendar File: ACCESSIBLE</span>';
+                } else {
+                    console.error('❌ Calendar file not accessible');
+                    document.getElementById('loadStatus').innerHTML += '<br><span class="error">❌ Calendar File: NOT ACCESSIBLE</span>';
+                }
+            })
+            .catch(e => {
+                console.error('❌ Calendar file fetch failed:', e);
+                document.getElementById('loadStatus').innerHTML += '<br><span class="error">❌ Calendar File: FETCH FAILED</span>';
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Calendar - Final with JSON Dataset & Swipable Cards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: #f8fafc;
+            overflow: hidden;
+            height: 100vh;
+            color: #1a202c;
+        }
+        
+        .infinite-calendar {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Left Panel - Calendar */
+        .calendar-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .calendar-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            position: relative;
+        }
+
+        .current-month {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .current-month:hover {
+            transform: scale(1.05);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .current-date {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        /* Navigation Controls */
+        .nav-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .view-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-btn.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* PERFECT GRID SYSTEM */
+        .weekdays-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-bottom: 2px solid #e2e8f0;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .weekday {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 8px;
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+            margin: 0 1px;
+            border-radius: 8px;
+        }
+
+        .calendar-viewport {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            position: relative;
+        }
+
+        .calendar-viewport::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .calendar-viewport::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .calendar-viewport::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #cbd5e0, #a0aec0);
+            border-radius: 4px;
+        }
+
+        .calendar-content {
+            position: relative;
+            padding: 0;
+        }
+
+        .month-block {
+            border-bottom: 3px solid #e2e8f0;
+            background: white;
+            margin-bottom: 8px;
+        }
+
+        .month-header {
+            background: linear-gradient(135deg, #f8fafc, #edf2f7);
+            padding: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            font-weight: 700;
+            font-size: 18px;
+            color: #2d3748;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* PERFECT CALENDAR GRID */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 1px;
+            background: #e2e8f0;
+            padding: 1px;
+        }
+
+        .day-cell {
+            background: white;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 8px 6px;
+            min-height: 120px;
+            border: 1px solid transparent;
+            overflow: hidden;
+        }
+
+        .day-cell:hover {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            transform: scale(1.02);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #cbd5e0;
+        }
+
+        .day-cell.other-month {
+            background: #f8fafc;
+            color: #a0aec0;
+            opacity: 0.6;
+        }
+
+        .day-cell.today {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .day-cell.has-entry {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            font-weight: 600;
+        }
+
+        .day-cell.selected {
+            background: linear-gradient(135deg, #ed8936, #dd6b20) !important;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(237, 137, 54, 0.3);
+            font-weight: 700;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .day-number {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .entry-count {
+            background: #e53e3e;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .entry-preview-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+        }
+
+        .entry-mini-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 6px;
+            padding: 6px;
+            margin-bottom: 2px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-left: 3px solid #667eea;
+        }
+
+        .day-cell.has-entry .entry-mini-card {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-left-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .entry-mini-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .entry-mini-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+
+        .entry-mini-image {
+            width: 20px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .entry-mini-rating {
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .entry-mini-stars {
+            color: #fbbf24;
+            font-size: 8px;
+        }
+
+        .day-cell.has-entry .entry-mini-stars {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .entry-mini-description {
+            font-size: 9px;
+            line-height: 1.2;
+            opacity: 0.9;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 3px;
+        }
+
+        .entry-mini-categories {
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+
+        .entry-mini-tag {
+            background: rgba(102, 126, 234, 0.8);
+            color: white;
+            padding: 1px 4px;
+            border-radius: 8px;
+            font-size: 7px;
+            font-weight: 600;
+        }
+
+        .day-cell.has-entry .entry-mini-tag {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        /* Right Panel - Journal */
+        .journal-panel {
+            width: 420px;
+            background: linear-gradient(135deg, #f8fafc, #edf2f7);
+            display: flex;
+            flex-direction: column;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .journal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .journal-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .selected-date {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .journal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Enhanced Journal Entry Cards */
+        .journal-entry {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .journal-entry:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .entry-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .journal-entry:hover .entry-actions {
+            opacity: 1;
+        }
+
+        .entry-action-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            color: #4a5568;
+        }
+
+        .entry-action-btn:hover {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .entry-action-btn.edit {
+            color: #667eea;
+        }
+
+        .entry-action-btn.delete {
+            color: #e53e3e;
+        }
+
+        .entry-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .entry-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .entry-rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f7fafc;
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+
+        .stars {
+            color: #fbbf24;
+            font-size: 14px;
+        }
+
+        .rating-value {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        .entry-date {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .entry-description {
+            color: #4a5568;
+            line-height: 1.7;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .entry-categories {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .category-tag {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .no-entries {
+            text-align: center;
+            color: #718096;
+            padding: 60px 20px;
+        }
+
+        .add-entry-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        /* SCROLLABLE YEAR PICKER */
+        .picker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .picker-overlay.active {
+            display: flex;
+        }
+
+        .picker-content {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 450px;
+            width: 100%;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .picker-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .picker-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .picker-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        /* SCROLLABLE YEAR CONTAINER */
+        .year-picker-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0 8px;
+            margin-bottom: 24px;
+        }
+
+        .year-picker-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .year-picker-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .year-picker-container::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        .year-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .picker-item {
+            background: #f7fafc;
+            border: 2px solid transparent;
+            padding: 16px 12px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .picker-item:hover {
+            background: #edf2f7;
+            transform: translateY(-2px);
+        }
+
+        .picker-item.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .picker-item.current {
+            border-color: #38a169;
+            background: #f0fff4;
+        }
+
+        .picker-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+        }
+
+        .picker-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-size: 14px;
+        }
+
+        .picker-btn.cancel {
+            background: #f7fafc;
+            color: #4a5568;
+        }
+
+        .picker-btn.confirm {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        /* SWIPABLE CARD OVERLAY */
+        .swipable-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .swipable-overlay.active {
+            display: flex;
+        }
+
+        .swipable-container {
+            width: 100%;
+            max-width: 100vw;
+            height: 80vh;
+            position: relative;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .cards-carousel {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            height: 100%;
+        }
+
+        .swipable-card {
+            width: 400px;
+            height: 85%;
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+
+        /* Card positions */
+        .swipable-card.prev {
+            transform: translateX(-120%) translateY(-50%) scale(0.85) rotateY(15deg);
+            opacity: 0.6;
+            z-index: 1;
+            filter: blur(1px);
+        }
+
+        .swipable-card.current {
+            transform: translateX(-50%) translateY(-50%) scale(1) rotateY(0deg);
+            opacity: 1;
+            z-index: 3;
+            filter: none;
+        }
+
+        .swipable-card.next {
+            transform: translateX(20%) translateY(-50%) scale(0.85) rotateY(-15deg);
+            opacity: 0.6;
+            z-index: 1;
+            filter: blur(1px);
+        }
+
+        .swipable-card.far-prev {
+            transform: translateX(-180%) translateY(-50%) scale(0.7) rotateY(25deg);
+            opacity: 0.3;
+            z-index: 0;
+            filter: blur(2px);
+        }
+
+        .swipable-card.far-next {
+            transform: translateX(80%) translateY(-50%) scale(0.7) rotateY(-25deg);
+            opacity: 0.3;
+            z-index: 0;
+            filter: blur(2px);
+        }
+
+        /* Hover effects */
+        .swipable-card.prev:hover,
+        .swipable-card.next:hover {
+            opacity: 0.8;
+            cursor: pointer;
+            filter: blur(0.5px);
+        }
+
+        /* Card content styling for better visibility */
+        .swipable-card .card-header {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            margin: -24px -24px 20px -24px;
+            padding: 20px 24px;
+            border-radius: 20px 20px 0 0;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-rating {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+
+        .entry-description {
+            flex: 1;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+
+        .entry-categories {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .close-btn {
+            background: #f7fafc;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #4a5568;
+        }
+
+        .card-counter {
+            background: #f7fafc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .card-rating {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .swipe-navigation {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 20px;
+            border-radius: 25px;
+            color: white;
+        }
+
+        .nav-arrow {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-arrow:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .swipe-hint {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .infinite-calendar {
+                flex-direction: column;
+            }
+
+            .journal-panel {
+                width: 100%;
+                height: 45%;
+                border-left: none;
+                border-top: 2px solid #e2e8f0;
+            }
+
+            .calendar-panel {
+                height: 55%;
+            }
+
+            .day-cell {
+                min-height: 70px;
+                padding: 8px 4px;
+            }
+
+            .swipable-container {
+                height: 95vh;
+                max-width: 100vw;
+            }
+
+            .cards-carousel {
+                max-width: 100vw;
+            }
+
+            .swipable-card {
+                width: 320px;
+                padding: 20px;
+                height: 80%;
+            }
+
+            /* Adjust card positions for mobile */
+            .swipable-card.prev {
+                transform: translateX(-110%) translateY(-50%) scale(0.8) rotateY(10deg);
+            }
+
+            .swipable-card.next {
+                transform: translateX(10%) translateY(-50%) scale(0.8) rotateY(-10deg);
+            }
+
+            .swipable-card.far-prev {
+                transform: translateX(-160%) translateY(-50%) scale(0.6) rotateY(20deg);
+            }
+
+            .swipable-card.far-next {
+                transform: translateX(60%) translateY(-50%) scale(0.6) rotateY(-20deg);
+            }
+
+            .card-image {
+                height: 150px;
+            }
+
+            .swipe-navigation {
+                bottom: 10px;
+                padding: 8px 16px;
+            }
+
+            .swipe-hint {
+                font-size: 11px;
+            }
+        }
+
+        /* Performance optimizations */
+        .calendar-viewport,
+        .day-cell,
+        .swipable-card {
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #718096;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="infinite-calendar">
+        <!-- Calendar Panel -->
+        <div class="calendar-panel">
+            <div class="calendar-header">
+                <div class="current-month" id="currentMonth" onclick="openPicker('month')">Loading...</div>
+                <div class="current-date" id="currentDate"></div>
+                
+                <div class="nav-controls">
+                    <div class="quick-nav">
+                        <button class="nav-btn" onclick="navigateMonth(-1)">← Prev</button>
+                        <button class="nav-btn" onclick="goToToday()">Today</button>
+                        <button class="nav-btn" onclick="navigateMonth(1)">Next →</button>
+                    </div>
+                    
+                    <div class="view-toggle">
+                        <button class="toggle-btn active" onclick="openPicker('month')">Month</button>
+                        <button class="toggle-btn" onclick="openPicker('year')">Year</button>
+                    </div>
+                    
+                    <div class="quick-nav">
+                        <button class="nav-btn" onclick="navigateYear(-1)">‹ Year</button>
+                        <button class="nav-btn" onclick="navigateYear(1)">Year ›</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="weekdays-header">
+                <div class="weekday">Sunday</div>
+                <div class="weekday">Monday</div>
+                <div class="weekday">Tuesday</div>
+                <div class="weekday">Wednesday</div>
+                <div class="weekday">Thursday</div>
+                <div class="weekday">Friday</div>
+                <div class="weekday">Saturday</div>
+            </div>
+            
+            <div class="calendar-viewport" id="calendarViewport">
+                <div class="calendar-content" id="calendarContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading infinite calendar...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enhanced Journal Panel -->
+        <div class="journal-panel">
+            <div class="journal-header">
+                <div class="journal-title">📖 Journal Entries</div>
+                <div class="selected-date" id="selectedDate">Select a date to view entries</div>
+            </div>
+            
+            <div class="journal-content" id="journalContent">
+                <div class="no-entries">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                    <h3>Your Journal Awaits</h3>
+                    <p>Click on any date to view or add journal entries</p>
+                    <p style="margin-top: 12px; font-size: 13px; opacity: 0.8;">💚 Green days have existing entries</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Year/Month Picker -->
+    <div class="picker-overlay" id="pickerOverlay">
+        <div class="picker-content">
+            <div class="picker-header">
+                <div class="picker-title" id="pickerTitle">Select Month</div>
+                <div id="pickerSubtitle"></div>
+            </div>
+            
+            <!-- Month Grid -->
+            <div class="picker-grid" id="pickerGrid" style="display: none;">
+                <!-- Populated by JavaScript -->
+            </div>
+            
+            <!-- Scrollable Year Container -->
+            <div class="year-picker-container" id="yearPickerContainer" style="display: none;">
+                <div class="year-grid" id="yearGrid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="picker-actions">
+                <button class="picker-btn cancel" onclick="closePicker()">Cancel</button>
+                <button class="picker-btn confirm" onclick="confirmPicker()">Go to Date</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Carousel Card Overlay -->
+    <div class="swipable-overlay" id="swipableOverlay">
+        <div class="swipable-container" id="swipableContainer">
+            <div class="cards-carousel" id="cardsCarousel">
+                <!-- Cards will be dynamically generated -->
+            </div>
+        </div>
+        
+        <div class="swipe-navigation">
+            <button class="nav-arrow" id="prevCard" onclick="previousCard()">←</button>
+            <div class="swipe-hint" style="text-align: center; line-height: 1.3;">
+                <div>🎴 Carousel View - See Previous & Next</div>
+                <div style="font-size: 10px; opacity: 0.8;">Swipe, click cards, or use ← → keys</div>
+            </div>
+            <button class="nav-arrow" id="nextCard" onclick="nextCard()">→</button>
+        </div>
+    </div>
+
+    <script>
+        // JSON dataset structure for journal entries
+        const journalDataset = [
+            {
+                "imgUrl": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg",
+                "rating": 4.8,
+                "categories": ["Deep Conditioning", "Moisture", "Hair Growth", "Natural Products"],
+                "date": "05/08/2025",
+                "description": "Finally tried the coconut oil deep conditioning treatment. My hair feels incredibly soft and manageable. Noticed significantly less breakage during combing."
+            },
+            {
+                "imgUrl": "https://images.pexels.com/photos/3669506/pexels-photo-3669506.jpeg",
+                "rating": 3.5,
+                "categories": ["Protein Treatment", "Hair Repair", "Salon Visit"],
+                "date": "12/08/2025",
+                "description": "Protein treatment at the salon. Hair feels a bit stiff - might have been too much protein. Will try a moisture mask next week to balance it out."
+            },
+            {
+                "imgUrl": "https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg",
+                "rating": 4.9,
+                "categories": ["Natural Hair", "Protective Style", "Hair Growth"],
+                "date": "15/08/2025",
+                "description": "Tried a new protective style today. Braids look amazing and should help retain length. Using leave-in conditioner to keep hair moisturized."
+            },
+            {
+                "imgUrl": "https://images.pexels.com/photos/3738388/pexels-photo-3738388.jpeg",
+                "rating": 4.2,
+                "categories": ["Hair Color", "Professional Treatment", "Color Protection"],
+                "date": "22/08/2025",
+                "description": "Got highlights at the salon today. Color looks vibrant but need to be extra careful with moisture. Investing in sulfate-free shampoo."
+            },
+            {
+                "imgUrl": "https://images.pexels.com/photos/3992656/pexels-photo-3992656.jpeg",
+                "rating": 4.7,
+                "categories": ["Hair Tools", "Heat Protection", "Styling"],
+                "date": "28/08/2025",
+                "description": "New ceramic straightener works great! Hair looks smooth and shiny. Always using heat protectant spray - no damage so far."
+            },
+            {
+                "imgUrl": "https://images.pexels.com/photos/3993012/pexels-photo-3993012.jpeg",
+                "rating": 4.0,
+                "categories": ["Hair Mask", "DIY Treatment", "Moisture"],
+                "date": "03/09/2025",
+                "description": "DIY avocado and honey hair mask. Left it on for 30 minutes. Hair feels softer but not as dramatic as expected. Might try adding oils next time."
+            },
+            {
+                "imgUrl": "https://images.pexels.com/photos/3738373/pexels-photo-3738373.jpeg",
+                "rating": 5.0,
+                "categories": ["Hair Growth", "Scalp Care", "Essential Oils"],
+                "date": "10/09/2025",
+                "description": "Started using rosemary oil for scalp massage. After 2 weeks, I swear my hair is growing faster! Scalp feels healthier and less itchy."
+            },
+            {
+                "imgUrl": "https://images.pexels.com/photos/3992649/pexels-photo-3992649.jpeg",
+                "rating": 3.8,
+                "categories": ["Hair Products", "Curl Definition", "Natural Hair"],
+                "date": "18/09/2025",
+                "description": "Tried a new curl cream today. Curls are more defined but a bit crunchy. Need to find the right amount to use. Will experiment more."
+            }
+        ];
+
+        // Convert dates and organize by date key
+        const journalDatabase = {};
+        
+        function initializeJournalData() {
+            journalDataset.forEach((entry, index) => {
+                // Parse the date string (MM/DD/YYYY format)
+                const [month, day, year] = entry.date.split('/');
+                const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                const dateKey = formatDateKey(date);
+                
+                // Add unique ID and formatted date
+                const processedEntry = {
+                    ...entry,
+                    id: `entry-${index}`,
+                    dateObject: date,
+                    dateKey: dateKey
+                };
+                
+                if (!journalDatabase[dateKey]) {
+                    journalDatabase[dateKey] = [];
+                }
+                journalDatabase[dateKey].push(processedEntry);
+            });
+            
+            // Sort entries within each day by rating (highest first)
+            Object.keys(journalDatabase).forEach(dateKey => {
+                journalDatabase[dateKey].sort((a, b) => b.rating - a.rating);
+            });
+        }
+        
+        // Calendar state
+        let currentViewDate = new Date();
+        let selectedDate = null;
+        let monthsCache = {};
+        let isScrolling = false;
+        let scrollTimeout = null;
+        let pickerMode = 'month';
+        let selectedPickerValue = null;
+        let currentSwipeIndex = 0;
+        let currentSwipeEntries = [];
+        
+        // Utility functions
+        function formatDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+        
+        function formatDisplayDate(date) {
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+        
+        function formatMonthYear(date) {
+            return date.toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+            });
+        }
+        
+        function getMonthKey(date) {
+            return `${date.getFullYear()}-${date.getMonth()}`;
+        }
+        
+        function generateStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 !== 0;
+            let stars = '';
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '★';
+            }
+            if (hasHalfStar) {
+                stars += '☆';
+            }
+            
+            return stars;
+        }
+        
+        // Calendar generation
+        function generateCalendarDays(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const startDate = new Date(firstDay);
+            startDate.setDate(firstDay.getDate() - firstDay.getDay());
+            
+            const days = [];
+            const currentDate = new Date(startDate);
+            
+            for (let day = 0; day < 42; day++) {
+                const dateKey = formatDateKey(currentDate);
+                const entries = journalDatabase[dateKey] || [];
+                
+                days.push({
+                    date: new Date(currentDate),
+                    dateKey: dateKey,
+                    dayNumber: currentDate.getDate(),
+                    isCurrentMonth: currentDate.getMonth() === month,
+                    isToday: formatDateKey(currentDate) === formatDateKey(new Date()),
+                    hasEntries: entries.length > 0,
+                    entryCount: entries.length,
+                    entries: entries
+                });
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            return days;
+        }
+        
+        function createMonthElement(year, month) {
+            const monthDate = new Date(year, month, 1);
+            const monthKey = getMonthKey(monthDate);
+            
+            if (monthsCache[monthKey]) {
+                return monthsCache[monthKey];
+            }
+            
+            const monthDiv = document.createElement('div');
+            monthDiv.className = 'month-block';
+            monthDiv.dataset.month = monthKey;
+            
+            const monthHeader = document.createElement('div');
+            monthHeader.className = 'month-header';
+            monthHeader.textContent = formatMonthYear(monthDate);
+            
+            const daysGrid = document.createElement('div');
+            daysGrid.className = 'days-grid';
+            
+            const days = generateCalendarDays(year, month);
+            days.forEach(day => {
+                const dayCell = document.createElement('div');
+                dayCell.className = `day-cell ${!day.isCurrentMonth ? 'other-month' : ''} ${day.isToday ? 'today' : ''} ${day.hasEntries ? 'has-entry' : ''}`;
+                dayCell.dataset.date = day.dateKey;
+                
+                const entryPreviewsHtml = day.hasEntries ? 
+                    day.entries.slice(0, 2).map(entry => `
+                        <div class="entry-mini-card" onclick="event.stopPropagation(); openSwipableCardFromMini('${entry.id}', '${day.dateKey}');">
+                            <div class="entry-mini-header">
+                                <img src="${entry.imgUrl}" alt="Entry" class="entry-mini-image" onerror="this.style.display='none'">
+                                <div class="entry-mini-rating">
+                                    <span class="entry-mini-stars">${generateStars(entry.rating)}</span>
+                                    <span>${entry.rating}</span>
+                                </div>
+                            </div>
+                            <div class="entry-mini-description">${entry.description}</div>
+                            <div class="entry-mini-categories">
+                                ${entry.categories.slice(0, 2).map(cat => `<span class="entry-mini-tag">${cat}</span>`).join('')}
+                            </div>
+                        </div>
+                    `).join('') : '';
+
+                dayCell.innerHTML = `
+                    <div class="day-header">
+                        <div class="day-number">${day.dayNumber}</div>
+                        ${day.entryCount > 1 ? `<div class="entry-count">${day.entryCount}</div>` : ''}
+                    </div>
+                    <div class="entry-preview-container">
+                        ${entryPreviewsHtml}
+                    </div>
+                `;
+                
+                dayCell.addEventListener('click', () => selectDate(day.date, day.entries));
+                daysGrid.appendChild(dayCell);
+            });
+            
+            monthDiv.appendChild(monthHeader);
+            monthDiv.appendChild(daysGrid);
+            
+            monthsCache[monthKey] = monthDiv;
+            return monthDiv;
+        }
+        
+        // Navigation functions
+        function navigateMonth(direction) {
+            const newDate = new Date(currentViewDate);
+            newDate.setMonth(currentViewDate.getMonth() + direction);
+            goToDate(newDate);
+        }
+        
+        function navigateYear(direction) {
+            const newDate = new Date(currentViewDate);
+            newDate.setFullYear(currentViewDate.getFullYear() + direction);
+            goToDate(newDate);
+        }
+        
+        function goToToday() {
+            goToDate(new Date());
+        }
+        
+        function goToDate(targetDate) {
+            currentViewDate = new Date(targetDate);
+            updateHeader(currentViewDate);
+            
+            monthsCache = {};
+            renderCalendar();
+            
+            setTimeout(() => {
+                const monthKey = getMonthKey(targetDate);
+                const monthElement = document.querySelector(`[data-month="${monthKey}"]`);
+                if (monthElement) {
+                    monthElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
+        
+        // Enhanced Picker functions with scrollable years
+        function openPicker(mode) {
+            pickerMode = mode;
+            const overlay = document.getElementById('pickerOverlay');
+            const title = document.getElementById('pickerTitle');
+            const subtitle = document.getElementById('pickerSubtitle');
+            const monthGrid = document.getElementById('pickerGrid');
+            const yearContainer = document.getElementById('yearPickerContainer');
+            
+            overlay.classList.add('active');
+            
+            if (mode === 'month') {
+                title.textContent = 'Select Month';
+                subtitle.textContent = currentViewDate.getFullYear();
+                monthGrid.style.display = 'grid';
+                yearContainer.style.display = 'none';
+                renderMonthPicker();
+            } else {
+                title.textContent = 'Select Year';
+                subtitle.textContent = 'Infinite scroll - ANY year from BC to future!';
+                monthGrid.style.display = 'none';
+                yearContainer.style.display = 'block';
+                renderScrollableYearPicker();
+            }
+        }
+        
+        function renderMonthPicker() {
+            const grid = document.getElementById('pickerGrid');
+            const months = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            
+            const currentMonth = currentViewDate.getMonth();
+            const todayMonth = new Date().getMonth();
+            const todayYear = new Date().getFullYear();
+            const currentYear = currentViewDate.getFullYear();
+            
+            grid.innerHTML = months.map((month, index) => {
+                const isSelected = index === currentMonth;
+                const isCurrent = index === todayMonth && currentYear === todayYear;
+                
+                return `
+                    <div class="picker-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}" 
+                         onclick="selectPickerItem(${index})">
+                        ${month}
+                    </div>
+                `;
+            }).join('');
+            
+            selectedPickerValue = currentMonth;
+        }
+        
+        function renderScrollableYearPicker() {
+            const grid = document.getElementById('yearGrid');
+            const currentYear = currentViewDate.getFullYear();
+            const todayYear = new Date().getFullYear();
+            
+            // Generate truly infinite range centered around current year
+            const rangeSize = 500; // Show 500 years in each direction
+            const startYear = currentYear - rangeSize;
+            const endYear = currentYear + rangeSize;
+            const years = [];
+            
+            for (let year = startYear; year <= endYear; year++) {
+                years.push(year);
+            }
+            
+            grid.innerHTML = years.map(year => {
+                const isSelected = year === currentYear;
+                const isCurrent = year === todayYear;
+                
+                return `
+                    <div class="picker-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}" 
+                         onclick="selectPickerItem(${year})">
+                        ${year}${year < 0 ? ' BC' : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            selectedPickerValue = currentYear;
+            
+            // Scroll to current year
+            setTimeout(() => {
+                const selectedElement = grid.querySelector('.picker-item.selected');
+                if (selectedElement) {
+                    selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+            
+            // Add infinite scroll functionality
+            const yearContainer = document.getElementById('yearPickerContainer');
+            yearContainer.addEventListener('scroll', handleYearPickerScroll);
+        }
+        
+        function handleYearPickerScroll() {
+            const container = document.getElementById('yearPickerContainer');
+            const grid = document.getElementById('yearGrid');
+            const scrollTop = container.scrollTop;
+            const scrollHeight = container.scrollHeight;
+            const clientHeight = container.clientHeight;
+            
+            // If scrolled near top, add more years at the beginning
+            if (scrollTop < 200) {
+                const firstYear = parseInt(grid.firstElementChild.textContent.replace(' BC', ''));
+                const newStartYear = firstYear - 100;
+                
+                const newYearsHtml = [];
+                for (let year = newStartYear; year < firstYear; year++) {
+                    const isSelected = year === currentViewDate.getFullYear();
+                    const isCurrent = year === new Date().getFullYear();
+                    
+                    newYearsHtml.push(`
+                        <div class="picker-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}" 
+                             onclick="selectPickerItem(${year})">
+                            ${year}${year < 0 ? ' BC' : ''}
+                        </div>
+                    `);
+                }
+                
+                grid.innerHTML = newYearsHtml.join('') + grid.innerHTML;
+                container.scrollTop = scrollTop + (100 * 40); // Maintain scroll position
+            }
+            
+            // If scrolled near bottom, add more years at the end
+            if (scrollTop + clientHeight > scrollHeight - 200) {
+                const lastYear = parseInt(grid.lastElementChild.textContent.replace(' BC', ''));
+                const newEndYear = lastYear + 100;
+                
+                const newYearsHtml = [];
+                for (let year = lastYear + 1; year <= newEndYear; year++) {
+                    const isSelected = year === currentViewDate.getFullYear();
+                    const isCurrent = year === new Date().getFullYear();
+                    
+                    newYearsHtml.push(`
+                        <div class="picker-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}" 
+                             onclick="selectPickerItem(${year})">
+                            ${year}${year < 0 ? ' BC' : ''}
+                        </div>
+                    `);
+                }
+                
+                grid.innerHTML += newYearsHtml.join('');
+            }
+        }
+        
+        function selectPickerItem(value) {
+            selectedPickerValue = value;
+            
+            const container = pickerMode === 'year' ? document.getElementById('yearGrid') : document.getElementById('pickerGrid');
+            container.querySelectorAll('.picker-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            event.target.classList.add('selected');
+        }
+        
+        function confirmPicker() {
+            if (selectedPickerValue === null) return;
+            
+            let targetDate = new Date(currentViewDate);
+            
+            if (pickerMode === 'month') {
+                targetDate.setMonth(selectedPickerValue);
+            } else {
+                targetDate.setFullYear(selectedPickerValue);
+            }
+            
+            goToDate(targetDate);
+            closePicker();
+        }
+        
+        function closePicker() {
+            document.getElementById('pickerOverlay').classList.remove('active');
+            selectedPickerValue = null;
+        }
+        
+        // Calendar rendering with infinite scrolling
+        function renderCalendar() {
+            const calendarContent = document.getElementById('calendarContent');
+            calendarContent.innerHTML = '';
+            
+            // Generate a larger range for truly infinite scrolling
+            const startDate = new Date(currentViewDate);
+            startDate.setMonth(startDate.getMonth() - 50); // Start 50 months before
+            
+            for (let i = 0; i < 100; i++) { // Show 100 months total (50 before + 50 after)
+                const monthDate = new Date(startDate);
+                monthDate.setMonth(startDate.getMonth() + i);
+                
+                const monthElement = createMonthElement(monthDate.getFullYear(), monthDate.getMonth());
+                calendarContent.appendChild(monthElement);
+            }
+            
+            updateHeader(currentViewDate);
+        }
+        
+        function updateHeader(date) {
+            document.getElementById('currentMonth').textContent = formatMonthYear(date);
+            document.getElementById('currentDate').textContent = formatDisplayDate(new Date());
+        }
+        
+        // Enhanced scroll handling with infinite loading
+        function handleScroll() {
+            const viewport = document.getElementById('calendarViewport');
+            const content = document.getElementById('calendarContent');
+            const scrollTop = viewport.scrollTop;
+            const scrollHeight = content.scrollHeight;
+            const clientHeight = viewport.clientHeight;
+            
+            if (!isScrolling) {
+                isScrolling = true;
+            }
+            
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 1500);
+            
+            // Infinite scroll: Add more months when near edges
+            const monthElements = content.querySelectorAll('.month-block');
+            
+            // Add months at the beginning if scrolled near top
+            if (scrollTop < 1000 && monthElements.length > 0) {
+                const firstMonth = monthElements[0].dataset.month;
+                const [year, month] = firstMonth.split('-');
+                const firstDate = new Date(parseInt(year), parseInt(month), 1);
+                
+                // Add 20 months before the first month
+                for (let i = 20; i > 0; i--) {
+                    const newDate = new Date(firstDate);
+                    newDate.setMonth(firstDate.getMonth() - i);
+                    const newMonthElement = createMonthElement(newDate.getFullYear(), newDate.getMonth());
+                    content.insertBefore(newMonthElement, content.firstChild);
+                }
+                
+                // Maintain scroll position
+                viewport.scrollTop = scrollTop + (20 * 600); // Approximate month height
+            }
+            
+            // Add months at the end if scrolled near bottom
+            if (scrollTop + clientHeight > scrollHeight - 1000 && monthElements.length > 0) {
+                const lastMonth = monthElements[monthElements.length - 1].dataset.month;
+                const [year, month] = lastMonth.split('-');
+                const lastDate = new Date(parseInt(year), parseInt(month), 1);
+                
+                // Add 20 months after the last month
+                for (let i = 1; i <= 20; i++) {
+                    const newDate = new Date(lastDate);
+                    newDate.setMonth(lastDate.getMonth() + i);
+                    const newMonthElement = createMonthElement(newDate.getFullYear(), newDate.getMonth());
+                    content.appendChild(newMonthElement);
+                }
+            }
+            
+            // Find current visible month
+            let visibleMonth = null;
+            monthElements.forEach(monthEl => {
+                const rect = monthEl.getBoundingClientRect();
+                const viewportRect = viewport.getBoundingClientRect();
+                
+                if (rect.top <= viewportRect.top + 150 && rect.bottom >= viewportRect.top + 150) {
+                    visibleMonth = monthEl.dataset.month;
+                }
+            });
+            
+            if (visibleMonth) {
+                const [year, month] = visibleMonth.split('-');
+                const monthDate = new Date(parseInt(year), parseInt(month), 1);
+                currentViewDate = monthDate;
+                updateHeader(monthDate);
+            }
+        }
+        
+        // Journal functions
+        function selectDate(date, entries) {
+            selectedDate = date;
+            
+            document.getElementById('selectedDate').textContent = formatDisplayDate(date);
+            renderJournalEntries(entries);
+            
+            document.querySelectorAll('.day-cell').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            
+            const selectedCell = document.querySelector(`[data-date="${formatDateKey(date)}"]`);
+            if (selectedCell) {
+                selectedCell.classList.add('selected');
+            }
+        }
+        
+        function renderJournalEntries(entries) {
+            const journalContent = document.getElementById('journalContent');
+            
+            if (!entries || entries.length === 0) {
+                journalContent.innerHTML = `
+                    <div class="no-entries">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <h3>No entries yet</h3>
+                        <p>No journal entries found for this date</p>
+                        <button class="add-entry-btn" onclick="addNewEntry()">✏️ Add Journal Entry</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            journalContent.innerHTML = entries.map((entry, index) => `
+                <div class="journal-entry" onclick="openSwipableCard(${index}, '${formatDateKey(selectedDate)}')">
+                    <div class="entry-actions">
+                        <button class="entry-action-btn edit" onclick="event.stopPropagation(); editEntry('${entry.id}', '${formatDateKey(selectedDate)}');" title="Edit entry">✏️</button>
+                        <button class="entry-action-btn delete" onclick="event.stopPropagation(); deleteEntry('${entry.id}', '${formatDateKey(selectedDate)}');" title="Delete entry">🗑️</button>
+                    </div>
+                    
+                    <img src="${entry.imgUrl}" alt="${entry.categories[0]}" class="entry-image" onerror="this.style.display='none'">
+                    
+                    <div class="entry-header">
+                        <div class="entry-rating">
+                            <span class="stars">${generateStars(entry.rating)}</span>
+                            <span class="rating-value">${entry.rating}</span>
+                        </div>
+                        <div class="entry-date">${entry.date}</div>
+                    </div>
+                    
+                    <div class="entry-description">${entry.description}</div>
+                    
+                    <div class="entry-categories">
+                        ${entry.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('') + `
+                <button class="add-entry-btn" onclick="addNewEntry()">✏️ Add Another Entry</button>
+            `;
+        }
+        
+        // Enhanced swipable card functionality
+        let allDateEntries = []; // Array of {date, entries} objects
+        let currentDateIndex = 0;
+        let currentEntryIndex = 0;
+        
+        function buildAllDateEntries() {
+            allDateEntries = [];
+            const sortedDates = Object.keys(journalDatabase).sort();
+            
+            sortedDates.forEach(dateKey => {
+                const entries = journalDatabase[dateKey];
+                if (entries && entries.length > 0) {
+                    allDateEntries.push({
+                        dateKey: dateKey,
+                        date: new Date(dateKey),
+                        entries: entries
+                    });
+                }
+            });
+        }
+        
+        function openSwipableCard(entryIndex, dateKey) {
+            buildAllDateEntries();
+            
+            // Find the date index
+            currentDateIndex = allDateEntries.findIndex(item => item.dateKey === dateKey);
+            currentEntryIndex = entryIndex;
+            
+            if (currentDateIndex === -1) return;
+            
+            const overlay = document.getElementById('swipableOverlay');
+            overlay.classList.add('active');
+            renderSwipableCard();
+            
+
+        }
+        
+        function openSwipableCardFromMini(entryId, dateKey) {
+            buildAllDateEntries();
+            
+            // Find the date index
+            currentDateIndex = allDateEntries.findIndex(item => item.dateKey === dateKey);
+            if (currentDateIndex === -1) return;
+            
+            // Find the entry index within that date
+            const dateEntries = allDateEntries[currentDateIndex].entries;
+            currentEntryIndex = dateEntries.findIndex(entry => entry.id === entryId);
+            if (currentEntryIndex === -1) currentEntryIndex = 0;
+            
+            const overlay = document.getElementById('swipableOverlay');
+            overlay.classList.add('active');
+            renderSwipableCard();
+            
+
+        }
+        
+        function renderSwipableCard() {
+            if (allDateEntries.length === 0 || currentDateIndex >= allDateEntries.length) return;
+            
+            const carousel = document.getElementById('cardsCarousel');
+            const totalEntriesAcrossAllDates = allDateEntries.reduce((sum, item) => sum + item.entries.length, 0);
+            
+            // Calculate global position for current entry
+            let globalPosition = 0;
+            for (let i = 0; i < currentDateIndex; i++) {
+                globalPosition += allDateEntries[i].entries.length;
+            }
+            globalPosition += currentEntryIndex + 1;
+            
+            // Create array of all entries with their global positions
+            const allEntries = [];
+            let pos = 0;
+            allDateEntries.forEach((dateData, dateIdx) => {
+                dateData.entries.forEach((entry, entryIdx) => {
+                    pos++;
+                    allEntries.push({
+                        ...entry,
+                        globalPosition: pos,
+                        dateData: dateData,
+                        dateIndex: dateIdx,
+                        entryIndex: entryIdx,
+                        isCurrent: dateIdx === currentDateIndex && entryIdx === currentEntryIndex
+                    });
+                });
+            });
+            
+            const currentGlobalIndex = allEntries.findIndex(e => e.isCurrent);
+            
+            // Render 5 cards: far-prev, prev, current, next, far-next
+            carousel.innerHTML = '';
+            
+            for (let i = -2; i <= 2; i++) {
+                const entryIndex = currentGlobalIndex + i;
+                const entry = allEntries[entryIndex];
+                
+                if (!entry) continue;
+                
+                let cardClass = 'swipable-card';
+                if (i === -2) cardClass += ' far-prev';
+                else if (i === -1) cardClass += ' prev';
+                else if (i === 0) cardClass += ' current';
+                else if (i === 1) cardClass += ' next';
+                else if (i === 2) cardClass += ' far-next';
+                
+                const cardElement = document.createElement('div');
+                cardElement.className = cardClass;
+                cardElement.innerHTML = `
+                    <div class="card-header">
+                        <div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px;">
+                            <div class="card-counter">Entry ${entry.globalPosition} of ${totalEntriesAcrossAllDates}</div>
+                            <div style="color: #667eea; font-weight: 600;">${formatDisplayDate(entry.dateData.date)}</div>
+                            <div style="color: #718096;">${entry.entryIndex + 1} of ${entry.dateData.entries.length} entries on this date</div>
+                        </div>
+                        ${i === 0 ? '<button class="close-btn" onclick="closeSwipableCard()">×</button>' : ''}
+                    </div>
+                    
+                    <img src="${entry.imgUrl}" alt="${entry.categories[0]}" class="card-image" onerror="this.style.display='none'">
+                    
+                    <div class="card-rating">
+                        <div class="entry-rating">
+                            <span class="stars">${generateStars(entry.rating)}</span>
+                            <span class="rating-value">${entry.rating}/5.0</span>
+                        </div>
+                        <div class="entry-date">${entry.date}</div>
+                    </div>
+                    
+                    <div class="entry-description">
+                        ${entry.description}
+                    </div>
+                    
+                    <div class="entry-categories">
+                        ${entry.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('')}
+                    </div>
+                `;
+                
+                // Add click handler for prev/next cards
+                if (i !== 0) {
+                    cardElement.addEventListener('click', () => {
+                        currentDateIndex = entry.dateIndex;
+                        currentEntryIndex = entry.entryIndex;
+                        renderSwipableCard();
+                    });
+                }
+                
+                carousel.appendChild(cardElement);
+            }
+            
+            updateSwipeNavigation();
+        }
+        
+        function updateSwipeNavigation() {
+            const prevBtn = document.getElementById('prevCard');
+            const nextBtn = document.getElementById('nextCard');
+            
+            // Determine if we can go previous/next
+            const canGoPrevious = currentDateIndex > 0 || currentEntryIndex > 0;
+            const canGoNext = currentDateIndex < allDateEntries.length - 1 || 
+                             currentEntryIndex < allDateEntries[currentDateIndex].entries.length - 1;
+            
+            prevBtn.disabled = !canGoPrevious;
+            nextBtn.disabled = !canGoNext;
+        }
+        
+        function previousCard() {
+            if (currentEntryIndex > 0) {
+                // Previous entry on same date
+                currentEntryIndex--;
+            } else if (currentDateIndex > 0) {
+                // Go to last entry of previous date
+                currentDateIndex--;
+                currentEntryIndex = allDateEntries[currentDateIndex].entries.length - 1;
+            }
+            renderSwipableCard();
+        }
+        
+        function nextCard() {
+            const currentEntries = allDateEntries[currentDateIndex].entries;
+            
+            if (currentEntryIndex < currentEntries.length - 1) {
+                // Next entry on same date
+                currentEntryIndex++;
+            } else if (currentDateIndex < allDateEntries.length - 1) {
+                // Go to first entry of next date
+                currentDateIndex++;
+                currentEntryIndex = 0;
+            }
+            renderSwipableCard();
+        }
+        
+        function closeSwipableCard() {
+            document.getElementById('swipableOverlay').classList.remove('active');
+        }
+        
+        function addNewEntry() {
+            if (!selectedDate) {
+                alert('Please select a date first!');
+                return;
+            }
+            
+            openAddEntryModal();
+        }
+        
+        function editEntry(entryId, dateKey) {
+            const entries = journalDatabase[dateKey];
+            const entry = entries.find(e => e.id === entryId);
+            
+            if (!entry) {
+                alert('Entry not found!');
+                return;
+            }
+            
+            openAddEntryModal(entry);
+        }
+        
+        function deleteEntry(entryId, dateKey) {
+            if (!confirm('Are you sure you want to delete this journal entry?')) {
+                return;
+            }
+            
+            const entries = journalDatabase[dateKey];
+            const entryIndex = entries.findIndex(e => e.id === entryId);
+            
+            if (entryIndex === -1) {
+                alert('Entry not found!');
+                return;
+            }
+            
+            // Remove the entry
+            entries.splice(entryIndex, 1);
+            
+            // If no entries left, remove the date key
+            if (entries.length === 0) {
+                delete journalDatabase[dateKey];
+            }
+            
+            // Save to localStorage
+            saveToLocalStorage();
+            
+            // Update UI
+            const updatedEntries = journalDatabase[dateKey] || [];
+            renderJournalEntries(updatedEntries);
+            
+            // Update calendar display
+            monthsCache = {}; // Clear cache to force re-render
+            renderCalendar();
+            
+            // Re-select the date to show updated entries
+            setTimeout(() => {
+                selectDate(selectedDate, updatedEntries);
+            }, 100);
+            
+            showSuccessMessage('🗑️ Journal entry deleted successfully!');
+        }
+        
+        function openAddEntryModal(existingEntry = null) {
+            const isEditing = !!existingEntry;
+            
+            const modal = document.createElement('div');
+            modal.className = 'picker-overlay';
+            modal.style.display = 'flex';
+            modal.id = 'addEntryModal';
+            
+            modal.innerHTML = `
+                <div class="picker-content" style="max-width: 500px; max-height: 90vh; display: flex; flex-direction: column;">
+                    <div class="picker-header">
+                        <div class="picker-title">${isEditing ? '✏️ Edit Journal Entry' : '✏️ Add Journal Entry'}</div>
+                        <div style="font-size: 14px; color: #667eea; margin-top: 4px;">${formatDisplayDate(selectedDate)}</div>
+                    </div>
+                    
+                    <div style="flex: 1; overflow-y: auto; padding-right: 8px;">
+                        <form id="journalForm" style="display: flex; flex-direction: column; gap: 20px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">📝 Description *</label>
+                                <textarea id="entryDescription" placeholder="How was your day? What happened? Share your thoughts..." 
+                                    style="width: 100%; min-height: 80px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: inherit; resize: vertical; font-size: 14px;" required>${existingEntry ? existingEntry.description : ''}</textarea>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">⭐ Rating</label>
+                                <div style="display: flex; gap: 12px; align-items: center; background: #f7fafc; padding: 12px; border-radius: 8px;">
+                                    <input type="range" id="entryRating" min="1" max="5" step="0.1" value="${existingEntry ? existingEntry.rating : '4.0'}" 
+                                        style="flex: 1;" oninput="updateRatingDisplay()">
+                                    <span id="ratingDisplay" style="font-weight: 700; color: #667eea; min-width: 40px; font-size: 16px;">${existingEntry ? existingEntry.rating : '4.0'}</span>
+                                    <span id="starsDisplay" style="color: #fbbf24; font-size: 18px;">${existingEntry ? generateStars(existingEntry.rating) : '★★★★☆'}</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">🏷️ Categories</label>
+                                <input type="text" id="entryCategories" placeholder="e.g., Hair Care, Workout, Travel, Personal" 
+                                    style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 14px;" 
+                                    value="${existingEntry ? existingEntry.categories.join(', ') : ''}">
+                                <div style="font-size: 12px; color: #718096; margin-top: 4px;">Separate multiple categories with commas</div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">🖼️ Image URL (optional)</label>
+                                <input type="url" id="entryImage" placeholder="https://example.com/image.jpg" 
+                                    style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 14px;" 
+                                    value="${existingEntry ? existingEntry.imgUrl : ''}">
+                                <div style="font-size: 12px; color: #718096; margin-top: 4px;">Add a photo URL to make your entry more visual</div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end;">
+                        <button type="button" onclick="closeAddEntryModal()" 
+                            style="background: #f7fafc; color: #4a5568; border: 2px solid #e2e8f0; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s ease;">
+                            ❌ Cancel
+                        </button>
+                        <button type="button" onclick="saveNewEntry(${isEditing ? `'${existingEntry.id}'` : 'null'})" 
+                            style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 32px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                            💾 ${isEditing ? 'Update Entry' : 'Save Entry'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Focus on description field
+            setTimeout(() => {
+                document.getElementById('entryDescription').focus();
+            }, 100);
+            
+            // Click outside to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeAddEntryModal();
+                }
+            });
+        }
+        
+        function updateRatingDisplay() {
+            const rating = parseFloat(document.getElementById('entryRating').value);
+            document.getElementById('ratingDisplay').textContent = rating.toFixed(1);
+            
+            // Update star display
+            const starsContainer = document.getElementById('starsDisplay');
+            if (starsContainer) {
+                starsContainer.textContent = generateStars(rating);
+            }
+        }
+        
+        function saveNewEntry(editingEntryId = null) {
+            const description = document.getElementById('entryDescription').value.trim();
+            const rating = parseFloat(document.getElementById('entryRating').value);
+            const categories = document.getElementById('entryCategories').value.trim();
+            const imageUrl = document.getElementById('entryImage').value.trim();
+            
+            if (!description) {
+                alert('Please enter a description!');
+                return;
+            }
+            
+            const dateKey = formatDateKey(selectedDate);
+            
+            if (editingEntryId) {
+                // Edit existing entry
+                const entries = journalDatabase[dateKey];
+                const entryIndex = entries.findIndex(e => e.id === editingEntryId);
+                
+                if (entryIndex === -1) {
+                    alert('Entry not found!');
+                    return;
+                }
+                
+                // Update existing entry
+                entries[entryIndex] = {
+                    ...entries[entryIndex],
+                    description: description,
+                    rating: rating,
+                    categories: categories ? categories.split(',').map(cat => cat.trim()) : ['Personal'],
+                    imgUrl: imageUrl || entries[entryIndex].imgUrl || 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg',
+                    date: selectedDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+                    dateObject: selectedDate,
+                    dateKey: dateKey
+                };
+                
+                showSuccessMessage('✅ Journal entry updated successfully!');
+            } else {
+                // Create new entry
+                const newEntry = {
+                    id: `entry-${Date.now()}`,
+                    description: description,
+                    rating: rating,
+                    categories: categories ? categories.split(',').map(cat => cat.trim()) : ['Personal'],
+                    imgUrl: imageUrl || 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg',
+                    date: selectedDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+                    dateObject: selectedDate,
+                    dateKey: dateKey
+                };
+                
+                // Add to database
+                if (!journalDatabase[dateKey]) {
+                    journalDatabase[dateKey] = [];
+                }
+                journalDatabase[dateKey].push(newEntry);
+                
+                showSuccessMessage('✅ Journal entry saved successfully!');
+            }
+            
+            // Sort by rating
+            journalDatabase[dateKey].sort((a, b) => b.rating - a.rating);
+            
+            // Save to localStorage for persistence
+            saveToLocalStorage();
+            
+            // Update UI
+            renderJournalEntries(journalDatabase[dateKey]);
+            
+            // Update calendar display
+            monthsCache = {}; // Clear cache to force re-render
+            renderCalendar();
+            
+            // Re-select the date to show updated entries
+            setTimeout(() => {
+                selectDate(selectedDate, journalDatabase[dateKey]);
+            }, 100);
+            
+            closeAddEntryModal();
+        }
+        
+        function closeAddEntryModal() {
+            const modal = document.getElementById('addEntryModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('journalEntries', JSON.stringify(journalDatabase));
+            } catch (e) {
+                console.warn('Could not save to localStorage:', e);
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem('journalEntries');
+                if (saved) {
+                    const savedData = JSON.parse(saved);
+                    // Merge with existing data
+                    Object.keys(savedData).forEach(dateKey => {
+                        if (!journalDatabase[dateKey]) {
+                            journalDatabase[dateKey] = [];
+                        }
+                        // Add only new entries (avoid duplicates)
+                        savedData[dateKey].forEach(entry => {
+                            if (!journalDatabase[dateKey].find(existing => existing.id === entry.id)) {
+                                journalDatabase[dateKey].push(entry);
+                            }
+                        });
+                        // Sort by rating
+                        journalDatabase[dateKey].sort((a, b) => b.rating - a.rating);
+                    });
+                }
+            } catch (e) {
+                console.warn('Could not load from localStorage:', e);
+            }
+        }
+        
+        function showSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #48bb78, #38a169);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                font-weight: 600;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            successDiv.textContent = message;
+            
+            document.body.appendChild(successDiv);
+            
+            // Animate in
+            setTimeout(() => {
+                successDiv.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                successDiv.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        successDiv.parentNode.removeChild(successDiv);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Event listeners
+        document.getElementById('pickerOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePicker();
+            }
+        });
+        
+        document.getElementById('swipableOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSwipableCard();
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePicker();
+                closeSwipableCard();
+            } else if (e.key === 'ArrowLeft' && e.ctrlKey) {
+                e.preventDefault();
+                navigateMonth(-1);
+            } else if (e.key === 'ArrowRight' && e.ctrlKey) {
+                e.preventDefault();
+                navigateMonth(1);
+            } else if (e.key === 'ArrowUp' && e.ctrlKey) {
+                e.preventDefault();
+                navigateYear(-1);
+            } else if (e.key === 'ArrowDown' && e.ctrlKey) {
+                e.preventDefault();
+                navigateYear(1);
+            } else if (e.key === 't' && e.ctrlKey) {
+                e.preventDefault();
+                goToToday();
+            } else if (e.key === 'ArrowLeft' && document.getElementById('swipableOverlay').classList.contains('active')) {
+                previousCard();
+            } else if (e.key === 'ArrowRight' && document.getElementById('swipableOverlay').classList.contains('active')) {
+                nextCard();
+            }
+        });
+        
+        // Simple touch events for swipe functionality
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        function setupSwipeListeners() {
+            const swipableContainer = document.getElementById('swipableContainer');
+            if (swipableContainer) {
+                swipableContainer.addEventListener('touchstart', function(e) {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, { passive: true });
+                
+                swipableContainer.addEventListener('touchend', function(e) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, { passive: true });
+            }
+        }
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const swipeDistance = touchStartX - touchEndX;
+            
+            if (Math.abs(swipeDistance) > swipeThreshold) {
+                if (swipeDistance > 0) {
+                    // Swiped left - next card
+                    nextCard();
+                } else {
+                    // Swiped right - previous card
+                    previousCard();
+                }
+            }
+        }
+        
+        // Initialize the calendar
+        function initCalendar() {
+            console.log('🚀 Initializing Final Infinite Calendar...');
+            initializeJournalData();
+            loadFromLocalStorage(); // Load any saved entries
+            renderCalendar();
+            
+            const viewport = document.getElementById('calendarViewport');
+            viewport.addEventListener('scroll', handleScroll, { passive: true });
+            
+            setTimeout(() => {
+                const todayElement = document.querySelector('.today');
+                if (todayElement) {
+                    const monthElement = todayElement.closest('.month-block');
+                    if (monthElement) {
+                        monthElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+                
+                // Setup simple swipe listeners after everything is loaded
+                setTimeout(setupSwipeListeners, 500);
+            }, 200);
+            
+            console.log('✅ Final Calendar initialized with JSON dataset!');
+            console.log('📊 Features: Perfect grid, scrollable year picker, swipable journal cards');
+            console.log('⌨️ Shortcuts: Ctrl+←→ (months), Ctrl+↑↓ (years), Ctrl+T (today), ←→ (swipe cards)');
+            console.log('✅ Calendar fully loaded and ready!');
+        }
+        
+        document.addEventListener('DOMContentLoaded', initCalendar);
+    </script>
+</body>
+</html>
