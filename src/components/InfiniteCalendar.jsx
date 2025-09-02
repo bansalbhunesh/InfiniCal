@@ -13,6 +13,7 @@ export default function InfiniteCalendar() {
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayIndex, setOverlayIndex] = useState(0)
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [editInitial, setEditInitial] = useState(null)
   const [toast, setToast] = useState(null)
   const [yearPickerOpen, setYearPickerOpen] = useState(false)
 
@@ -41,8 +42,17 @@ export default function InfiniteCalendar() {
   })
 
   const entriesForSelected = useMemo(() => getEntries(formatDateKey(selectedDate)), [selectedDate])
+  const flattenedEntries = useMemo(() => getFlattenedEntriesSorted(), [selectedDate, addModalOpen, overlayOpen, toast])
 
   const openEntriesOverlay = (initialIndex = 0) => { setOverlayIndex(initialIndex); setOverlayOpen(true) }
+  const openEntriesForDate = (date) => {
+    const dk = formatDateKey(date)
+    const idx = flattenedEntries.findIndex(e => e.dateKey === dk)
+    if (idx >= 0) {
+      setOverlayIndex(idx)
+      setOverlayOpen(true)
+    }
+  }
 
   // Infinite month loading using sentinels
   useEffect(() => {
@@ -55,6 +65,17 @@ export default function InfiniteCalendar() {
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Scroll to the current month on load
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    setTimeout(() => {
+      const todayEl = el.querySelector('[aria-current="date"]')
+      const monthBlock = todayEl && todayEl.closest('[data-month-block]')
+      if (monthBlock && monthBlock.scrollIntoView) monthBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 200)
   }, [])
 
   return (
@@ -76,7 +97,7 @@ export default function InfiniteCalendar() {
       </div>
       <div ref={containerRef} className="scroll-viewport" style={{ maxHeight: '70vh' }}>
         {monthBlocks.map(({ monthDate, days, label }) => (
-          <div key={monthDate.toISOString()} style={{ marginBottom: 12, borderBottom: '1px solid #e2e8f0' }}>
+          <div key={monthDate.toISOString()} data-month-block style={{ marginBottom: 12, borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ position: 'sticky', top: 0, background: '#fff', padding: 8, fontWeight: 700, zIndex: 10 }}>{label}</div>
             <div className="week-header">
               {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
@@ -94,7 +115,7 @@ export default function InfiniteCalendar() {
                   <div
                     key={day.toISOString()}
                     onClick={() => setSelectedDate(day)}
-                    onDoubleClick={() => openEntriesOverlay(0)}
+                    onDoubleClick={() => openEntriesForDate(day)}
                     className={`day-cell${disabled?' day-outside':''}${isToday?' day-today':''}${isSelected?' day-selected':''}`}
                     aria-current={isToday ? 'date' : undefined}
                     aria-selected={isSelected}
@@ -129,7 +150,8 @@ export default function InfiniteCalendar() {
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div style={{color:'#f59e0b',fontWeight:700}}>{'★'.repeat(Math.round(e.rating || 0))}</div>
                 <div style={{display:'flex',gap:8}}>
-                  <button onClick={()=>{ setOverlayIndex(idx); setOverlayOpen(true) }}>View</button>
+                  <button onClick={()=>{ const gi = flattenedEntries.findIndex(x=>x.id===e.id); if (gi>=0) { setOverlayIndex(gi); setOverlayOpen(true) } }}>View</button>
+                  <button onClick={()=>{ setEditInitial(e); setAddModalOpen(true) }}>Edit</button>
                   <button onClick={()=>{ deleteEntry(formatDateKey(selectedDate), e.id); setToast('🗑️ Journal entry deleted successfully!') }}>Delete</button>
                 </div>
               </div>
@@ -142,32 +164,49 @@ export default function InfiniteCalendar() {
 
       <JournalOverlay
         isOpen={overlayOpen}
-        entries={entriesForSelected}
+        entries={flattenedEntries}
         currentIndex={overlayIndex}
         onClose={()=>setOverlayOpen(false)}
         onPrev={()=>setOverlayIndex(i=>Math.max(0, i-1))}
-        onNext={()=>setOverlayIndex(i=>Math.min(entriesForSelected.length-1, i+1))}
+        onNext={()=>setOverlayIndex(i=>Math.min(flattenedEntries.length-1, i+1))}
       />
 
       <AddEntryModal
         isOpen={addModalOpen}
-        onCancel={()=>setAddModalOpen(false)}
+        initial={editInitial}
+        onCancel={()=>{ setAddModalOpen(false); setEditInitial(null) }}
         onSave={(payload)=>{
           const date = selectedDate
           const dateKey = formatDateKey(date)
-          const entry = {
-            id: `entry-${Date.now()}`,
-            description: payload.description,
-            rating: payload.rating,
-            categories: payload.categories?.length ? payload.categories : ['Personal'],
-            imgUrl: payload.imgUrl || 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg',
-            date: date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
-            dateObject: date,
-            dateKey
+          if (editInitial) {
+            const updated = {
+              ...editInitial,
+              description: payload.description,
+              rating: Number(payload.rating),
+              categories: payload.categories?.length ? payload.categories : ['Personal'],
+              imgUrl: payload.imgUrl || editInitial.imgUrl || 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg',
+              date: date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+              dateObject: date,
+              dateKey
+            }
+            upsertEntry(dateKey, updated)
+            setToast('✅ Journal entry updated successfully!')
+            setEditInitial(null)
+          } else {
+            const entry = {
+              id: `entry-${Date.now()}`,
+              description: payload.description,
+              rating: Number(payload.rating),
+              categories: payload.categories?.length ? payload.categories : ['Personal'],
+              imgUrl: payload.imgUrl || 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg',
+              date: date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+              dateObject: date,
+              dateKey
+            }
+            upsertEntry(dateKey, entry)
+            setToast('✅ Journal entry saved successfully!')
           }
-          upsertEntry(dateKey, entry)
           setAddModalOpen(false)
-          setToast('✅ Journal entry saved successfully!')
         }}
       />
 
