@@ -126,6 +126,9 @@ export default function InfiniteCalendar() {
                   <div
                     key={day.toISOString()}
                     onClick={() => {
+                      // Only allow selection of dates within the current month
+                      if (!isSameMonth(day, monthDate)) return
+                      
                       // Simply select the date without changing anchor or scrolling
                       setSelectedDate(day)
                     }}

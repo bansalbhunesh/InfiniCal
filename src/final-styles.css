@@ -64,7 +64,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'He
   box-shadow: 0 6px 20px rgba(0,0,0,0.15); 
   border-color: rgba(102, 126, 234, 0.3); 
 }
-.day-cell.other-month { background: #f8fafc; color: #a0aec0; opacity: 0.6; }
+.day-cell.other-month { 
+  background: #f8fafc; 
+  color: #a0aec0; 
+  opacity: 0.6; 
+  cursor: not-allowed;
+  pointer-events: none; /* Disable all interactions */
+}
 .day-cell.today { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-weight: 700; box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
 .day-cell.has-entry { background: linear-gradient(135deg, #48bb78, #38a169); color: #fff; font-weight: 600; }
 .day-cell.selected { background: linear-gradient(135deg, #ed8936, #dd6b20) !important; color: #fff; box-shadow: 0 0 0 3px rgba(237,137,54,0.3); font-weight: 700; }

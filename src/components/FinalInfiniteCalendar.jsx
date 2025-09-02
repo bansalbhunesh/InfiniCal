@@ -20,8 +20,10 @@ function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate, anc
   const cursor = new Date(start)
   for (let i = 0; i < 42; i++) {
     const dk = formatDateKey(cursor)
-    const entries = getEntries(dk)
-    days.push({ date: new Date(cursor), dk, isCurrentMonth: isSameMonth(cursor, monthDate), isToday: isSameDay(cursor, new Date()), entries })
+    const isCurrentMonth = isSameMonth(cursor, monthDate)
+    // Only show entries for dates within the current month
+    const entries = isCurrentMonth ? getEntries(dk) : []
+    days.push({ date: new Date(cursor), dk, isCurrentMonth, isToday: isSameDay(cursor, new Date()), entries })
     cursor.setDate(cursor.getDate() + 1)
   }
 
@@ -36,6 +38,9 @@ function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate, anc
             className={`day-cell${d.isCurrentMonth ? '' : ' other-month'}${d.isToday ? ' today' : ''}${d.entries.length ? ' has-entry' : ''}${selectedDate && isSameDay(d.date, selectedDate) ? ' selected' : ''}`}
             data-date={d.dk}
             onClick={() => {
+              // Only allow selection of dates within the current month
+              if (!d.isCurrentMonth) return
+              
               // Use the centralized navigation function
               navigateToDate(d.date)
             }}
