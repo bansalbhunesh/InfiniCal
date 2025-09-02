@@ -153,21 +153,34 @@
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
+            scroll-behavior: auto; /* Changed from smooth to auto to prevent conflicts */
             position: relative;
+            scrollbar-gutter: stable;
         }
 
         .calendar-viewport::-webkit-scrollbar {
             width: 8px;
+            background: transparent;
         }
 
         .calendar-viewport::-webkit-scrollbar-track {
             background: #f1f5f9;
+            border-radius: 4px;
         }
 
         .calendar-viewport::-webkit-scrollbar-thumb {
             background: linear-gradient(135deg, #cbd5e0, #a0aec0);
             border-radius: 4px;
+            border: 1px solid #f1f5f9;
+            transition: background 0.2s ease;
+        }
+
+        .calendar-viewport::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #a0aec0, #718096);
+        }
+
+        .calendar-viewport::-webkit-scrollbar-corner {
+            background: #f1f5f9;
         }
 
         .calendar-content {
@@ -608,6 +621,7 @@
 
         .year-picker-container::-webkit-scrollbar {
             width: 6px;
+            background: transparent;
         }
 
         .year-picker-container::-webkit-scrollbar-track {
@@ -616,8 +630,18 @@
         }
 
         .year-picker-container::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
+            background: linear-gradient(135deg, #cbd5e0, #a0aec0);
             border-radius: 3px;
+            border: 1px solid #f1f5f9;
+            transition: background 0.2s ease;
+        }
+
+        .year-picker-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #a0aec0, #718096);
+        }
+
+        .year-picker-container::-webkit-scrollbar-corner {
+            background: #f1f5f9;
         }
 
         .year-grid {
