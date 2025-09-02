@@ -58,60 +58,50 @@ export default function InfiniteCalendar() {
   }, [])
 
   return (
-    <div style={{ width: '100%', maxWidth: 1200, background: 'white', borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.08)', padding: 16, display:'grid', gridTemplateColumns:'1fr 360px', gap:16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8 }}>
-        <div style={{ display:'flex', gap:6 }}>
-          <button onClick={()=>setAnchorDate(d=>addMonths(d,-1))}>Prev Month</button>
-          <button onClick={()=>setAnchorDate(d=>addMonths(d,1))}>Next Month</button>
+    <div className="card" style={{ width: '100%', maxWidth: 1200, padding: 16, display:'grid', gridTemplateColumns:'1fr 360px', gap:16, margin:'16px auto' }}>
+      <div className="calendar-header">
+        <div className="nav-controls">
+          <div className="quick-nav">
+            <button className="nav-btn" onClick={()=>setAnchorDate(d=>addMonths(d,-1))}>Prev Month</button>
+            <button className="nav-btn" onClick={()=>setAnchorDate(d=>addMonths(d,1))}>Next Month</button>
+          </div>
+          <div className="calendar-title" onClick={()=>setYearPickerOpen(true)}>{selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+          <div className="quick-nav">
+            <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n })}>Prev Year</button>
+            <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n })}>Next Year</button>
+            <button className="chip" onClick={()=>setSelectedDate(new Date())}>Today</button>
+          </div>
         </div>
-        <div style={{ fontWeight: 700, cursor:'pointer' }} onClick={()=>setYearPickerOpen(true)}>{selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
-        <div style={{ display:'flex', gap:6 }}>
-          <button onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n })}>Prev Year</button>
-          <button onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n })}>Next Year</button>
-          <button onClick={()=>setSelectedDate(new Date())}>Today</button>
-        </div>
+        <div className="calendar-subtitle">Use Ctrl+Arrows for faster navigation</div>
       </div>
-      <div ref={containerRef} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+      <div ref={containerRef} className="scroll-viewport" style={{ maxHeight: '70vh' }}>
         {monthBlocks.map(({ monthDate, days, label }) => (
           <div key={monthDate.toISOString()} style={{ marginBottom: 12, borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ position: 'sticky', top: 0, background: '#fff', padding: 8, fontWeight: 700, zIndex: 10 }}>{label}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+            <div className="week-header">
               {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                <div key={d} style={{ textAlign: 'center' }}>{d}</div>
+                <div key={d} className="weekday">{d}</div>
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+            <div className="day-grid">
               {days.map(day => {
                 const disabled = !isSameMonth(day, monthDate)
                 const isToday = isSameDay(day, new Date())
                 const isSelected = isSameDay(day, selectedDate)
                 const dateKey = formatDateKey(day)
                 const entryCount = getEntries(dateKey).length
-                const baseStyle = {
-                  padding: '8px 0',
-                  textAlign: 'center',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  color: disabled ? '#cbd5e1' : '#0f172a',
-                  background: isSelected ? '#0ea5e9' : isToday ? 'rgba(14,165,233,0.12)' : 'transparent',
-                  fontWeight: isSelected ? 700 : 500,
-                  position: 'relative'
-                }
                 return (
                   <div
                     key={day.toISOString()}
                     onClick={() => setSelectedDate(day)}
                     onDoubleClick={() => openEntriesOverlay(0)}
-                    style={baseStyle}
+                    className={`day-cell${disabled?' day-outside':''}${isToday?' day-today':''}${isSelected?' day-selected':''}`}
                     aria-current={isToday ? 'date' : undefined}
                     aria-selected={isSelected}
                     role="gridcell"
                   >
                     {day.getDate()}
-                    {!!entryCount && (
-                      <span style={{position:'absolute',bottom:6,right:8,fontSize:10,background:'#e2e8f0',borderRadius:8,padding:'2px 6px'}}>{entryCount}</span>
-                    )}
+                    {!!entryCount && (<span className="badge">{entryCount}</span>)}
                   </div>
                 )
               })}
