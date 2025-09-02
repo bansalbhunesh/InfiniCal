@@ -91,6 +91,32 @@ const sampleImages = [
   'https://images.pexels.com/photos/3738388/pexels-photo-3738388.jpeg?auto=compress&cs=tinysrgb&w=800',
 ]
 
+function seedEntriesForDateRange(startDate, endDate, entryPrefix = 'seed') {
+  const current = new Date(startDate)
+  while (current <= endDate) {
+    const entriesCount = Math.floor(Math.random() * 5) // 0..4 entries per day
+    for (let j = 0; j < entriesCount; j++) {
+      const pick = Math.floor(Math.random() * sampleDescriptions.length)
+      const rating = Number(randomBetween(3, 5).toFixed(1))
+      const cats = sampleCategories[pick % sampleCategories.length]
+      const img = sampleImages[pick % sampleImages.length]
+      const dateKey = format(current, 'yyyy-MM-dd')
+      const entry = {
+        id: `${entryPrefix}-${dateKey}-${j}-${Math.floor(Math.random()*100000)}`,
+        description: sampleDescriptions[pick],
+        rating,
+        categories: cats,
+        imgUrl: img,
+        date: current.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+        dateObject: new Date(current),
+        dateKey
+      }
+      upsertEntry(dateKey, entry)
+    }
+    current.setDate(current.getDate() + 1)
+  }
+}
+
 export function seedIfEmpty() {
   try {
     const existing = localStorage.getItem('journalEntries')
@@ -98,30 +124,43 @@ export function seedIfEmpty() {
   } catch {}
 
   const today = new Date()
-  // Seed across the past/next 90 days with 0-4 entries per day
-  for (let i = -90; i <= 90; i++) {
-    const d = new Date(today)
-    d.setDate(today.getDate() + i)
-    const entriesCount = Math.floor(Math.random() * 5) // 0..4
-    for (let j = 0; j < entriesCount; j++) {
-      const pick = Math.floor(Math.random() * sampleDescriptions.length)
-      const rating = Number(randomBetween(3, 5).toFixed(1))
-      const cats = sampleCategories[pick % sampleCategories.length]
-      const img = sampleImages[pick % sampleImages.length]
-      const dateKey = format(d, 'yyyy-MM-dd')
-      const entry = {
-        id: `seed-${dateKey}-${j}-${Math.floor(Math.random()*100000)}`,
-        description: sampleDescriptions[pick],
-        rating,
-        categories: cats,
-        imgUrl: img,
-        date: d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
-        dateObject: d,
-        dateKey
-      }
-      upsertEntry(dateKey, entry)
+  
+  // Seed recent data (past 90 days to next 90 days)
+  const recentStart = new Date(today)
+  recentStart.setDate(today.getDate() - 90)
+  const recentEnd = new Date(today)
+  recentEnd.setDate(today.getDate() + 90)
+  seedEntriesForDateRange(recentStart, recentEnd, 'recent')
+  
+  // Seed 2020 data (full year with some memorable dates having more entries)
+  const year2020Start = new Date('2020-01-01')
+  const year2020End = new Date('2020-12-31')
+  seedEntriesForDateRange(year2020Start, year2020End, '2020')
+  
+  // Add some special 2020 entries for memorable dates
+  const specialDates2020 = [
+    { date: '2020-01-01', desc: 'New Year resolution: learn React! 🎉', rating: 5.0, cats: ['Goals', 'Learning'] },
+    { date: '2020-03-15', desc: 'Started working from home. Strange times. 🏠', rating: 3.5, cats: ['Work', 'Life'] },
+    { date: '2020-07-04', desc: 'Virtual 4th of July celebration with family. 🎆', rating: 4.2, cats: ['Family', 'Holiday'] },
+    { date: '2020-12-25', desc: 'Christmas at home, but grateful for health. ❤️', rating: 4.8, cats: ['Family', 'Gratitude'] },
+    { date: '2020-12-31', desc: 'What a year! Ready for 2021 and new projects. 🚀', rating: 4.5, cats: ['Reflection', 'Goals'] }
+  ]
+  
+  specialDates2020.forEach(({ date, desc, rating, cats }) => {
+    const [year, month, day] = date.split('-')
+    const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    const entry = {
+      id: `special-${date}-${Math.floor(Math.random()*100000)}`,
+      description: desc,
+      rating,
+      categories: cats,
+      imgUrl: sampleImages[Math.floor(Math.random() * sampleImages.length)],
+      date: d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+      dateObject: d,
+      dateKey: date
     }
-  }
+    upsertEntry(date, entry)
+  })
 }
 
 
