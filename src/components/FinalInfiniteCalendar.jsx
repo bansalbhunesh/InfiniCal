@@ -36,8 +36,8 @@ function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate, anc
             className={`day-cell${d.isCurrentMonth ? '' : ' other-month'}${d.isToday ? ' today' : ''}${d.entries.length ? ' has-entry' : ''}${selectedDate && isSameDay(d.date, selectedDate) ? ' selected' : ''}`}
             data-date={d.dk}
             onClick={() => {
-              // Simply select the date - don't change anchorDate or scroll
-              onSelectDate(d.date)
+              // Use the centralized navigation function
+              navigateToDate(d.date)
             }}
           >
             <div className="day-header">
@@ -132,33 +132,51 @@ export default function FinalInfiniteCalendar() {
     if (idx >= 0) { setOverlayIndex(idx); setOverlayOpen(true) }
   }, [flattened])
 
-  // Helper function to scroll to a specific date
-  const scrollToDate = useCallback((date) => {
-    setTimeout(() => {
-      const viewport = viewportRef.current
-      if (!viewport) return
+  // Helper function to navigate to any date (including distant years)
+  const navigateToDate = useCallback((targetDate) => {
+    const targetYear = targetDate.getFullYear()
+    const anchorYear = anchorDate.getFullYear()
+    const yearDiff = Math.abs(targetYear - anchorYear)
+    
+    // Set the selected date first
+    setSelectedDate(targetDate)
+    
+    if (yearDiff > 1) {
+      // For distant dates, update anchor and scroll
+      setIsUserNavigating(true)
+      setAnchorDate(startOfMonth(targetDate))
       
-      const targetMonth = `${date.getFullYear()}-${date.getMonth()}`
-      const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`)
-      if (monthEl) {
-        monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // Wait for months to regenerate, then scroll
+      setTimeout(() => {
+        const viewport = viewportRef.current
+        if (!viewport) return
         
-        // After month is visible, try to highlight the specific day
-        setTimeout(() => {
-          const dateKey = formatDateKey(date)
-          const dayEl = viewport.querySelector(`[data-date="${dateKey}"]`)
-          if (dayEl) {
-            // Ensure it's in view
-            const dayRect = dayEl.getBoundingClientRect()
-            const viewportRect = viewport.getBoundingClientRect()
-            if (dayRect.top < viewportRect.top || dayRect.bottom > viewportRect.bottom) {
-              dayEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-            }
+        const targetMonth = `${targetDate.getFullYear()}-${targetDate.getMonth()}`
+        const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`)
+        if (monthEl) {
+          monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+        
+        setTimeout(() => setIsUserNavigating(false), 1000)
+      }, 300)
+    } else {
+      // For nearby dates, just scroll to make visible
+      setTimeout(() => {
+        const viewport = viewportRef.current
+        if (!viewport) return
+        
+        const dateKey = formatDateKey(targetDate)
+        const dayEl = viewport.querySelector(`[data-date="${dateKey}"]`)
+        if (dayEl) {
+          const rect = dayEl.getBoundingClientRect()
+          const viewportRect = viewport.getBoundingClientRect()
+          if (rect.top < viewportRect.top || rect.bottom > viewportRect.bottom) {
+            dayEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
           }
-        }, 300)
-      }
-    }, 100)
-  }, [])
+        }
+      }, 100)
+    }
+  }, [anchorDate, setSelectedDate])
 
   useEffect(() => {
     const el = viewportRef.current
@@ -515,8 +533,8 @@ export default function FinalInfiniteCalendar() {
                 setTimeout(() => {
                   const viewport = viewportRef.current
                   if (viewport) {
-                    const targetMonth = `${next.getFullYear()}-${next.getMonth()}`
-                    const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`)
+                  const targetMonth = `${next.getFullYear()}-${next.getMonth()}`
+                  const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`)
                     if (monthEl) {
                       monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
                     }
