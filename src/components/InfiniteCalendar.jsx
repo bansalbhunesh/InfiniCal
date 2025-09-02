@@ -126,13 +126,8 @@ export default function InfiniteCalendar() {
                   <div
                     key={day.toISOString()}
                     onClick={() => {
-                      setIsUserNavigating(true)
+                      // Simply select the date without changing anchor or scrolling
                       setSelectedDate(day)
-                      // Ensure the selected date's month is visible
-                      if (!isSameMonth(day, anchorDate)) {
-                        setAnchorDate(startOfMonth(day))
-                      }
-                      setTimeout(() => setIsUserNavigating(false), 1000)
                     }}
                     onDoubleClick={() => openEntriesForDate(day)}
                     className={`day-cell${disabled?' day-outside':''}${isToday?' day-today':''}${isSelected?' day-selected':''}`}

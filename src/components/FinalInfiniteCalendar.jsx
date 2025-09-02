@@ -33,18 +33,11 @@ function MonthBlock({ monthDate, onSelectDate, onOpenFromMini, selectedDate, anc
         {days.map((d) => (
           <div
             key={d.dk}
-            className={`day-cell${d.isCurrentMonth ? '' : ' other-month'}${d.isToday ? ' today' : ''}${d.entries.length ? ' has-entry' : ''}${selectedDate && d.date.toDateString()===new Date(selectedDate).toDateString() ? ' selected' : ''}`}
+            className={`day-cell${d.isCurrentMonth ? '' : ' other-month'}${d.isToday ? ' today' : ''}${d.entries.length ? ' has-entry' : ''}${selectedDate && isSameDay(d.date, selectedDate) ? ' selected' : ''}`}
             data-date={d.dk}
             onClick={() => {
+              // Simply select the date - don't change anchorDate or scroll
               onSelectDate(d.date)
-              // Disable automatic scroll updates temporarily
-              setIsUserNavigating(true)
-              // Also update anchorDate to ensure the selected month stays visible
-              if (!isSameMonth(d.date, anchorDate)) {
-                setAnchorDate(startOfMonth(d.date))
-              }
-              // Re-enable automatic updates after a delay
-              setTimeout(() => setIsUserNavigating(false), 1000)
             }}
           >
             <div className="day-header">
@@ -104,8 +97,8 @@ export default function FinalInfiniteCalendar() {
   const months = useMemo(() => {
     const arr = []
     const start = new Date(anchorDate)
-    start.setMonth(start.getMonth() - 50)
-    for (let i = 0; i < 100; i++) {
+    start.setMonth(start.getMonth() - 24) // 2 years before
+    for (let i = 0; i < 48; i++) { // 4 years total range (2 before, 2 after)
       const d = new Date(start)
       d.setMonth(start.getMonth() + i)
       arr.push(startOfMonth(d))
@@ -138,6 +131,34 @@ export default function FinalInfiniteCalendar() {
     const idx = flattened.findIndex((e) => e.dateKey === dk)
     if (idx >= 0) { setOverlayIndex(idx); setOverlayOpen(true) }
   }, [flattened])
+
+  // Helper function to scroll to a specific date
+  const scrollToDate = useCallback((date) => {
+    setTimeout(() => {
+      const viewport = viewportRef.current
+      if (!viewport) return
+      
+      const targetMonth = `${date.getFullYear()}-${date.getMonth()}`
+      const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`)
+      if (monthEl) {
+        monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        
+        // After month is visible, try to highlight the specific day
+        setTimeout(() => {
+          const dateKey = formatDateKey(date)
+          const dayEl = viewport.querySelector(`[data-date="${dateKey}"]`)
+          if (dayEl) {
+            // Ensure it's in view
+            const dayRect = dayEl.getBoundingClientRect()
+            const viewportRect = viewport.getBoundingClientRect()
+            if (dayRect.top < viewportRect.top || dayRect.bottom > viewportRect.bottom) {
+              dayEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+            }
+          }
+        }, 300)
+      }
+    }, 100)
+  }, [])
 
   useEffect(() => {
     const el = viewportRef.current
@@ -277,6 +298,7 @@ export default function FinalInfiniteCalendar() {
     return () => container.removeEventListener('scroll', onScroll)
   }, [pickerOpen, pickerLevel, anchorDate, yearsStart, yearsEnd])
 
+  // Scroll to today on initial load
   useEffect(() => {
     const el = viewportRef.current
     if (!el) return
@@ -286,6 +308,8 @@ export default function FinalInfiniteCalendar() {
       if (month && month.scrollIntoView) month.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 200)
   }, [])
+
+  // Remove automatic scroll-to-date to prevent random jumping
 
   const selectedEntries = useMemo(() => {
     if (!selectedDate) return []
@@ -478,31 +502,27 @@ export default function FinalInfiniteCalendar() {
                 const m = typeof pickerMonth === 'number' ? pickerMonth : anchorDate.getMonth()
                 const d = pickerDay || 1
                 const next = new Date(y, m, d)
+                
+                // For distant dates, update both anchor and selected
+                setIsUserNavigating(true)
                 setAnchorDate(next)
                 setSelectedDate(next)
                 setPickerDay(null)
                 setPickerLevel('month')
                 setPickerOpen(false)
-                // Scroll to the specific month then highlight the selected day
+                
+                // Allow time for the month range to update, then scroll
                 setTimeout(() => {
-                  const viewport = document.getElementById('calendarViewport') || viewportRef.current
-                  if (!viewport) return
-                  const targetMonth = `${next.getFullYear()}-${next.getMonth()}`
-                  const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`)
-                  if (monthEl && monthEl.scrollIntoView) {
-                    monthEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    // after month is in view, try to select the day cell
-                    setTimeout(() => {
-                      const dk = formatDateKey(next)
-                      const dayEl = viewport.querySelector(`[data-date="${dk}"]`)
-                      if (dayEl) {
-                        document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'))
-                        dayEl.classList.add('selected')
-                        if (dayEl.scrollIntoView) dayEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
-                      }
-                    }, 250)
+                  const viewport = viewportRef.current
+                  if (viewport) {
+                    const targetMonth = `${next.getFullYear()}-${next.getMonth()}`
+                    const monthEl = viewport.querySelector(`[data-month="${targetMonth}"]`)
+                    if (monthEl) {
+                      monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }
                   }
-                }, 50)
+                  setTimeout(() => setIsUserNavigating(false), 1000)
+                }, 200)
               }}>Go to Date</button>
             </div>
           </div>
