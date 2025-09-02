@@ -157,7 +157,11 @@ export default function InfiniteCalendar() {
                   <button onClick={()=>{ deleteEntry(formatDateKey(selectedDate), e.id); setToast('🗑️ Journal entry deleted successfully!') }}>Delete</button>
                 </div>
               </div>
-              <div style={{fontSize:12,color:'#64748b',margin:'6px 0'}}>{Array.isArray(e.categories) ? e.categories.join(', ') : ''}</div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap',margin:'6px 0'}}>
+                {Array.isArray(e.categories) && e.categories.map(cat => (
+                  <span key={cat} style={{fontSize:11,color:'#334155',background:'#e2e8f0',padding:'2px 8px',borderRadius:999,fontWeight:700}}>{cat}</span>
+                ))}
+              </div>
               <div style={{whiteSpace:'pre-wrap',fontSize:14}}>{e.description}</div>
             </div>
           ))}

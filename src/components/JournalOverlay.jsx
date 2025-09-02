@@ -47,7 +47,10 @@ export default function JournalOverlay({ isOpen, entries, onClose, onPrev, onNex
     <div id="journal-overlay-swipe" style={{position:'fixed',inset:0,background:'rgba(15,23,42,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}} onClick={(e)=>{if(e.target===e.currentTarget) onClose?.()}}>
       <div style={{width:560,maxWidth:'90vw',maxHeight:'90vh',background:'#fff',borderRadius:12,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow:'0 10px 30px rgba(0,0,0,0.25)'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:16,borderBottom:'1px solid #e2e8f0'}}>
-          <div style={{fontWeight:700}}>{entry ? formatDisplayDate(new Date(entry.dateObject || entry.date || Date.now())) : 'Entry'}</div>
+          <div style={{display:'flex',flexDirection:'column'}}>
+            <div style={{fontWeight:800, fontSize:14, color:'#64748b'}}>Entry {currentIndex+1} of {entries.length}</div>
+            <div style={{fontWeight:700}}>{entry ? formatDisplayDate(new Date(entry.dateObject || entry.date || Date.now())) : 'Entry'}</div>
+          </div>
           <button onClick={onClose} aria-label="Close" style={{fontSize:20,lineHeight:1,background:'transparent',border:'none',cursor:'pointer'}}>×</button>
         </div>
         <div style={{ position:'relative', height: 420, overflow:'hidden' }}>
@@ -71,7 +74,11 @@ export default function JournalOverlay({ isOpen, entries, onClose, onPrev, onNex
                 <div style={{padding:12}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                     <div style={{color:'#f59e0b',fontWeight:700}}>{'★'.repeat(Math.round(e.rating || 0))}</div>
-                    <div style={{fontSize:12,color:'#64748b'}}>{Array.isArray(e.categories) ? e.categories.join(', ') : ''}</div>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
+                      {Array.isArray(e.categories) && e.categories.map(cat => (
+                        <span key={cat} style={{fontSize:11,color:'#334155',background:'#e2e8f0',padding:'2px 8px',borderRadius:999,fontWeight:700}}>{cat}</span>
+                      ))}
+                    </div>
                   </div>
                   <div style={{whiteSpace:'pre-wrap'}}>{e.description}</div>
                 </div>
