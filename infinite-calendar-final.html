@@ -936,10 +936,12 @@
             opacity: 0.8;
         }
 
-        /* Mobile Responsive */
+        /* Mobile Responsive Design */
         @media (max-width: 768px) {
             .infinite-calendar {
                 flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
             }
 
             .journal-panel {
@@ -947,15 +949,65 @@
                 height: 45%;
                 border-left: none;
                 border-top: 2px solid #e2e8f0;
+                min-height: 300px;
             }
 
             .calendar-panel {
                 height: 55%;
+                min-height: 400px;
+            }
+
+            .calendar-header {
+                padding: 12px 16px;
+            }
+
+            .calendar-title {
+                font-size: 18px;
+            }
+
+            .nav-controls {
+                gap: 6px;
+            }
+
+            .nav-btn {
+                padding: 8px 12px;
+                font-size: 12px;
             }
 
             .day-cell {
-                min-height: 70px;
+                min-height: 50px;
                 padding: 8px 4px;
+                font-size: 14px;
+            }
+
+            .day-number {
+                font-size: 14px;
+            }
+
+            .entry-mini-card {
+                padding: 4px;
+                font-size: 10px;
+            }
+
+            .entry-mini-description {
+                font-size: 8px;
+            }
+
+            .journal-header {
+                padding: 12px;
+            }
+
+            .journal-title {
+                font-size: 14px;
+            }
+
+            .selected-date {
+                font-size: 11px;
+            }
+
+            .add-entry-btn {
+                padding: 10px 16px;
+                font-size: 14px;
             }
 
             .swipable-container {
@@ -1001,6 +1053,133 @@
 
             .swipe-hint {
                 font-size: 11px;
+            }
+
+            /* Picker overlay mobile adjustments */
+            .picker-overlay {
+                padding: 10px;
+            }
+
+            .picker-content {
+                max-width: 95vw;
+                max-height: 90vh;
+                padding: 20px;
+            }
+
+            .picker-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .year-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .picker-item {
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            .calendar-header {
+                padding: 10px 12px;
+            }
+
+            .calendar-title {
+                font-size: 16px;
+            }
+
+            .nav-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .day-cell {
+                min-height: 45px;
+                padding: 6px 3px;
+            }
+
+            .day-number {
+                font-size: 13px;
+            }
+
+            .journal-panel {
+                height: 40%;
+                min-height: 250px;
+            }
+
+            .calendar-panel {
+                height: 60%;
+                min-height: 350px;
+            }
+
+            .journal-header {
+                padding: 10px;
+            }
+
+            .journal-title {
+                font-size: 13px;
+            }
+
+            .selected-date {
+                font-size: 10px;
+            }
+
+            .add-entry-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .picker-content {
+                padding: 15px;
+            }
+
+            .picker-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            .year-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            .swipable-card {
+                width: 280px;
+                padding: 15px;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        .day-cell, .nav-btn, .add-entry-btn, .picker-item {
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            touch-action: manipulation;
+        }
+
+        /* Prevent zoom on input focus on mobile */
+        @media (max-width: 768px) {
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Landscape mobile orientation */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .infinite-calendar {
+                flex-direction: row;
+            }
+            
+            .calendar-panel {
+                height: 100%;
+                width: 60%;
+            }
+            
+            .journal-panel {
+                height: 100%;
+                width: 40%;
+                border-left: 2px solid #e2e8f0;
+                border-top: none;
             }
         }
 
