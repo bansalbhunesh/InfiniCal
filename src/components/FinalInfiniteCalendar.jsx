@@ -368,7 +368,9 @@ export default function FinalInfiniteCalendar() {
 
   const selectedEntries = useMemo(() => {
     if (!selectedDate) return []
-    return getEntries(formatDateKey(selectedDate))
+    const entries = getEntries(formatDateKey(selectedDate))
+    console.log('selectedEntries updated for date:', selectedDate, 'entries:', entries.length)
+    return entries
   }, [selectedDate])
 
   return (
@@ -498,7 +500,13 @@ export default function FinalInfiniteCalendar() {
       <div className="journal-panel">
         <div className="journal-header">
           <div className="journal-title">📖 Journal Entries</div>
-          <div className="selected-date" id="selectedDate">{selectedDate ? new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Select a date to view entries'}</div>
+          <div className="selected-date" id="selectedDate">
+            {selectedDate ? (() => {
+              const formatted = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+              console.log('Journal header updating with date:', selectedDate, 'formatted:', formatted)
+              return formatted
+            })() : 'Select a date to view entries'}
+          </div>
         </div>
         <div className="journal-content" id="journalContent">
           <div style={{ display:'flex', gap: 8, marginBottom: 12 }}>
