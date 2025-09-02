@@ -14,6 +14,17 @@ export default function AddEntryModal({ isOpen, initial, onCancel, onSave }) {
     setImgUrl(initial?.imgUrl || '')
   }, [isOpen, initial])
 
+  useEffect(() => {
+    function handler(e) {
+      const detail = e.detail || {}
+      if (!detail) return
+      const { date, entry } = detail
+      // The parent component will handle persistence; this event just toggles UI open
+    }
+    window.addEventListener('open-add-entry', handler)
+    return () => window.removeEventListener('open-add-entry', handler)
+  }, [])
+
   if (!isOpen) return null
 
   return (

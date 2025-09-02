@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { formatDisplayDate } from '../utils/date'
 
 export default function JournalOverlay({ isOpen, entries, onClose, onPrev, onNext, currentIndex }) {
@@ -44,8 +45,22 @@ export default function JournalOverlay({ isOpen, entries, onClose, onPrev, onNex
   }
 
   return (
-    <div id="journal-overlay-swipe" style={{position:'fixed',inset:0,background:'rgba(15,23,42,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}} onClick={(e)=>{if(e.target===e.currentTarget) onClose?.()}}>
-      <div style={{width:560,maxWidth:'90vw',maxHeight:'90vh',background:'#fff',borderRadius:12,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow:'0 10px 30px rgba(0,0,0,0.25)'}}>
+    <AnimatePresence>
+      <motion.div
+        id="journal-overlay-swipe"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        style={{position:'fixed',inset:0,background:'rgba(15,23,42,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}
+        onClick={(e)=>{if(e.target===e.currentTarget) onClose?.()}}
+      >
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 20, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 280, damping: 26 }}
+          style={{width:560,maxWidth:'90vw',maxHeight:'90vh',background:'#fff',borderRadius:12,overflow:'hidden',display:'flex',flexDirection:'column',boxShadow:'0 10px 30px rgba(0,0,0,0.25)'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:16,borderBottom:'1px solid #e2e8f0'}}>
           <div style={{display:'flex',flexDirection:'column'}}>
             <div style={{fontWeight:800, fontSize:14, color:'#64748b'}}>Entry {currentIndex+1} of {entries.length}</div>
@@ -56,18 +71,21 @@ export default function JournalOverlay({ isOpen, entries, onClose, onPrev, onNex
         <div style={{ position:'relative', height: 420, overflow:'hidden' }}>
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'stretch', justifyContent:'center' }}>
             {windowed.map(({ entry: e, offset, idx }) => (
-              <div key={idx} onClick={()=>{ if (offset<0) onPrev?.(); else if (offset>0) onNext?.() }} style={{
-                width: offset===0 ? 520 : 420,
-                margin: '0 8px',
-                transform: `translateX(${offset*440}px) scale(${offset===0?1:0.92})`,
-                opacity: offset===0 ? 1 : 0.6,
-                transition:'transform 0.25s ease, opacity 0.25s ease',
-                pointerEvents: offset===0 ? 'auto' : 'auto',
-                background:'#fafafa',
-                border:'1px solid #e5e7eb',
-                borderRadius:12,
-                overflow:'hidden'
-              }}>
+              <motion.div
+                key={idx}
+                onClick={()=>{ if (offset<0) onPrev?.(); else if (offset>0) onNext?.() }}
+                initial={{ x: offset*480, scale: offset===0 ? 0.96 : 0.9, opacity: offset===0 ? 0.9 : 0.6 }}
+                animate={{ x: offset*480, scale: offset===0 ? 1 : 0.92, opacity: offset===0 ? 1 : 0.6 }}
+                transition={{ type: 'spring', stiffness: 220, damping: 24 }}
+                style={{
+                  width: offset===0 ? 520 : 420,
+                  margin: '0 8px',
+                  background:'#fafafa',
+                  border:'1px solid #e5e7eb',
+                  borderRadius:12,
+                  overflow:'hidden'
+                }}
+              >
                 {e.imgUrl && (
                   <img src={e.imgUrl} alt="" style={{width:'100%',display:'block',maxHeight:240,objectFit:'cover'}} onError={(ev)=>{ev.currentTarget.style.display='none'}} />
                 )}
@@ -82,7 +100,7 @@ export default function JournalOverlay({ isOpen, entries, onClose, onPrev, onNex
                   </div>
                   <div style={{whiteSpace:'pre-wrap'}}>{e.description}</div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -91,8 +109,9 @@ export default function JournalOverlay({ isOpen, entries, onClose, onPrev, onNex
           <div style={{flex:1}} />
           <button onClick={onNext} disabled={currentIndex>=entries.length-1} className="overlay-nav">Next ›</button>
         </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   )
 }
 

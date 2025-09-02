@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { addMonths, startOfMonth, isSameMonth, isSameDay } from 'date-fns'
 import { buildMonthGrid, getAdjacentMonths, formatDateKey, formatDisplayDate } from '../utils/date'
 import { getEntries, upsertEntry, deleteEntry, getFlattenedEntriesSorted } from '../state/journalStore'
-import Toast from './Toast'
+import Toast from './Toast.jsx'
 import JournalOverlay from './JournalOverlay'
 import AddEntryModal from './AddEntryModal'
 import YearPicker from './YearPicker'
@@ -81,7 +81,7 @@ export default function InfiniteCalendar() {
   }, [])
 
   return (
-    <div className="card" style={{ width: '100%', maxWidth: 1200, padding: 16, display:'grid', gridTemplateColumns:'1fr 360px', gap:16, margin:'16px auto' }}>
+    <div className="card" style={{ width: '100%', maxWidth: 1400, padding: 16, display:'grid', gridTemplateColumns:'minmax(720px, 1fr) 420px', gap:16, margin:'16px auto', height: 'calc(100vh - 32px)' }}>
       <div className="calendar-header">
         <div className="nav-controls">
           <div className="quick-nav">
@@ -93,19 +93,19 @@ export default function InfiniteCalendar() {
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()-1); return n })}>Prev Year</button>
             <button className="nav-btn" onClick={()=>setAnchorDate(d=>{ const n = new Date(d); n.setFullYear(n.getFullYear()+1); return n })}>Next Year</button>
             <button className="chip" onClick={()=>{ const t=new Date(); setSelectedDate(t); setAnchorDate(t); const el = containerRef.current; if(el){ setTimeout(()=>{ const m = el.querySelector('[aria-current="date"]').closest('[data-month-block]'); m&&m.scrollIntoView({behavior:'smooth',block:'start'}) },50)} }}>Today</button>
-          </div>
-        </div>
-        <div className="calendar-subtitle">Use Ctrl+Arrows for faster navigation</div>
       </div>
-      <div ref={containerRef} className="scroll-viewport" style={{ maxHeight: '70vh' }}>
+    </div>
+        <div className="calendar-subtitle">Use Ctrl+Arrows for faster navigation</div>
+            </div>
+      <div ref={containerRef} className="scroll-viewport" style={{ maxHeight: 'calc(100vh - 220px)' }}>
         {monthBlocks.map(({ monthDate, days, label }) => (
           <div key={monthDate.toISOString()} data-month-block style={{ marginBottom: 12, borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ position: 'sticky', top: 0, background: '#fff', padding: 8, fontWeight: 700, zIndex: 10 }}>{label}</div>
             <div className="week-header">
               {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
                 <div key={d} className="weekday">{d}</div>
-              ))}
-            </div>
+                ))}
+              </div>
             <div className="day-grid">
               {days.map(day => {
                 const disabled = !isSameMonth(day, monthDate)
@@ -119,6 +119,7 @@ export default function InfiniteCalendar() {
                     onClick={() => setSelectedDate(day)}
                     onDoubleClick={() => openEntriesForDate(day)}
                     className={`day-cell${disabled?' day-outside':''}${isToday?' day-today':''}${isSelected?' day-selected':''}`}
+                    style={{ minHeight: 54 }}
                     aria-current={isToday ? 'date' : undefined}
                     aria-selected={isSelected}
                     role="gridcell"
@@ -127,14 +128,14 @@ export default function InfiniteCalendar() {
                     {!!entryCount && (<span className="badge">{entryCount}</span>)}
                   </div>
                 )
-              })}
-            </div>
-          </div>
+      })}
+    </div>
+  </div>
         ))}
-      </div>
+        </div>
 
       {/* Right side journal panel */}
-      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+      <div style={{ display:'flex', flexDirection:'column', gap:10, height: '100%', minHeight: 0 }}>
         <div style={{ fontWeight: 800, fontSize: 16 }}>{formatDisplayDate(selectedDate)}</div>
         <div style={{ display:'flex', gap:8 }}>
           <button onClick={()=>setAddModalOpen(true)}>Add Entry</button>
@@ -143,7 +144,7 @@ export default function InfiniteCalendar() {
             <button onClick={()=>openEntriesOverlay(0)}>Open</button>
           )}
         </div>
-        <div style={{ overflowY:'auto' }}>
+        <div style={{ overflowY:'auto', flex: 1, minHeight: 0 }}>
           {entriesForSelected.length === 0 && (
             <div style={{ color:'#94a3b8', fontSize: 14 }}>No entries yet</div>
           )}
@@ -165,8 +166,8 @@ export default function InfiniteCalendar() {
               <div style={{whiteSpace:'pre-wrap',fontSize:14}}>{e.description}</div>
             </div>
           ))}
+          </div>
         </div>
-      </div>
 
       <JournalOverlay
         isOpen={overlayOpen}
