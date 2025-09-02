@@ -1,5 +1,16 @@
+# Language detection for GitHub
 *.jsx linguist-language=JavaScript
 *.js linguist-language=JavaScript
-package.json linguist-language=JSON
 *.css linguist-language=CSS
 *.html linguist-language=HTML
+
+# Mark package files as configuration
+package.json linguist-language=JSON
+package-lock.json linguist-generated=true
+
+# Exclude build artifacts and dependencies from stats
+dist/ linguist-generated=true
+node_modules/ linguist-vendored=true
+
+# Mark the standalone HTML as documentation
+infinite-calendar-final.html linguist-documentation=true
